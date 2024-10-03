@@ -11,11 +11,9 @@
         public string? Region { get; set; }
         public bool? IsPrivate { get; set; }
         public bool? FreeToSpectate { get; set; }
-        public DateTime StartDateTime { get; set; }
-        public DateTime EndDateTime { get; set; }
+        public DateTime? StartDateTime { get; set; }
+        public DateTime? EndDateTime { get; set; }
         public string? TournamentUrl { get; set; }
-        public DateTime? LastMatchDate { get; set; }
-        public bool? HasLiveMatches { get; set; }
         public decimal PrizePool { get; set; }
         public string? ImageUri { get; set; }
         public string? DisplayName { get; set; }

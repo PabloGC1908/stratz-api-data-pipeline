@@ -11,6 +11,7 @@ namespace StratzAPI.Data
         public DbSet<MatchStatsPickBans> MatchStatsPickBans { get; set; }
         public DbSet<Team> Team { get; set; }
         public DbSet<League> League { get; set; }
+        public DbSet<Player> Player { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) 
         {

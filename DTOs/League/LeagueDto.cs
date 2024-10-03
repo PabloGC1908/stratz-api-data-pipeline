@@ -11,8 +11,8 @@
         public string? Region { get; set; }
         public bool? IsPrivate { get; set; }
         public bool? FreeToSpectate { get; set; }
-        public long StartDateTime { get; set; }
-        public long EndDateTime { get; set; }
+        public long? StartDateTime { get; set; }
+        public long? EndDateTime { get; set; }
         public string? TournamentUrl { get; set; }
         public decimal PrizePool { get; set; }
         public string? ImageUri { get; set; }

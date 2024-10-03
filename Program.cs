@@ -11,6 +11,7 @@ builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<GraphQLService>();
 builder.Services.AddScoped<TeamRepository>();
 builder.Services.AddScoped<LeagueRepository>();
+builder.Services.AddScoped<PlayerRepository>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SQL"));

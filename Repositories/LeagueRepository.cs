@@ -64,7 +64,24 @@ namespace StratzAPI.Repositories
         {
             return new League
             {
-
+                Id = leagueDto.Id,
+                Name = leagueDto.Name,
+                Banner = leagueDto.Banner,
+                BasePrizePool = leagueDto.BasePrizePool,
+                StopSalesTime = Utils.ConvertUnixToDateTime(leagueDto.StopSalesTime),
+                Tier = leagueDto.Tier,
+                Region = leagueDto.Region,
+                IsPrivate = leagueDto.IsPrivate,
+                FreeToSpectate = leagueDto.FreeToSpectate,
+                StartDateTime = Utils.ConvertUnixToDateTime(leagueDto.StartDateTime),
+                EndDateTime = Utils.ConvertUnixToDateTime(leagueDto.EndDateTime),
+                TournamentUrl = leagueDto.TournamentUrl,
+                PrizePool = leagueDto.PrizePool,
+                ImageUri = leagueDto.ImageUri,
+                DisplayName = leagueDto.DisplayName,
+                Description = leagueDto.Description,
+                Country = leagueDto.Country,
+                Venue = leagueDto.Venue
             };
         }
 
