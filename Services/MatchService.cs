@@ -30,8 +30,6 @@ namespace StratzAPI.Services
                 return;
             }
 
-            _logger.LogInformation(matchData.ToString());
-
             var match = new Match
             {
                 Id = matchData.Id,
@@ -64,7 +62,5 @@ namespace StratzAPI.Services
             await _dbContext.MatchStatistics.AddRangeAsync(matchStatistics);
             await _dbContext.SaveChangesAsync();
         }
-
-
     }
 }

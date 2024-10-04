@@ -2,7 +2,7 @@
 
 namespace StratzAPI.Models
 {
-    public class MatchStatsPickBans
+    public class MatchPickBans
     {
         [Key]
         public long Id { get; set; }

@@ -80,7 +80,7 @@ namespace StratzAPI.Repositories
 
         public bool GetPlayer(long playerId)
         {
-            return _context.Player.Any(x => x.Id == playerId);
+            return _context.Player.
         }
     }
 }

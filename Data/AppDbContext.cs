@@ -6,7 +6,7 @@ namespace StratzAPI.Data
     public class AppDbContext : DbContext
     {
         public DbSet<Match> Match { get; set; }
-        public DbSet<MatchStatistics> MatchStatistics { get; set; }
+        public DbSet<MatchStats> MatchStatistics { get; set; }
         public DbSet<MatchPlayer> MatchPlayer { get; set; }
         public DbSet<MatchStatsPickBans> MatchStatsPickBans { get; set; }
         public DbSet<Team> Team { get; set; }

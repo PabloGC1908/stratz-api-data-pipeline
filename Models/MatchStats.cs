@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StratzAPI.Models
 {
-    public class MatchStatistics
+    public class MatchStats
     {
         [Key]
         public long Id { get; set; }
