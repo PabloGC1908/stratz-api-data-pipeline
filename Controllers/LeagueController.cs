@@ -17,6 +17,8 @@ namespace StratzAPI.Controllers
             _leagueRepository = leagueRepository;
         }
 
+
+        // Crea la liga que se ingresa y los equipos que participan en ella
         [HttpPost]
         public async Task<IActionResult> PostLeague(int leagueId)
         {

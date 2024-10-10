@@ -16,20 +16,5 @@ namespace StratzAPI.Controllers
             _logger = logger;
             _teamRepository = teamRepository;
         }
-
-        [HttpPost]
-        public async Task<IActionResult> PostTeam(int matchId)
-        {
-            _logger.LogInformation($"Ingresando equipo con id: {matchId}");
-            try
-            {
-                await _teamRepository.GetTeamData(matchId);
-                return Ok("Datos guardados correctamente");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error: {ex.Message}");
-            }
-        }
     }
 }

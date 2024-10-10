@@ -13,12 +13,10 @@ namespace StratzAPI.Controllers
     public class MatchController : ControllerBase
     {
         private readonly ILogger<MatchController> _logger;
-        private readonly MatchService _matchService;
 
-        public MatchController(MatchService matchService, ILogger<MatchController> logger)
+        public MatchController(ILogger<MatchController> logger)
         {
             _logger = logger;
-            _matchService = matchService;
         }
 
         [HttpPost]
@@ -27,7 +25,6 @@ namespace StratzAPI.Controllers
             _logger.LogInformation($"Ingresando partida con id: {id}");
             try
             {
-                await _matchService.SaveMatchDataAsync(id);
                 return Ok("Datos guardados correctamente");
             }
             catch (Exception ex)

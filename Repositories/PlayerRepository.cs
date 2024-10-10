@@ -2,6 +2,7 @@
 using StratzAPI.DTOs.Player;
 using StratzAPI.Models;
 using StratzAPI.Services;
+using System.Numerics;
 
 namespace StratzAPI.Repositories
 {
@@ -18,8 +19,26 @@ namespace StratzAPI.Repositories
             _graphQLService = graphQLService;
         }
 
-        public async Task GetPlayerData(long steamAccountId)
+        public async Task<Player> GetOrFetchPlayerAsync(long steamAccountId)
         {
+            _logger.LogInformation("Verificando si el player con id {steamAccountId} se encuentra en la base de datos", steamAccountId);
+            Player? player = await _context.Player.FindAsync(steamAccountId);
+
+            if (player == null)
+            {
+                _logger.LogInformation("El jugador no se encuentra en la base de datos, haciendo una peticion a la API");
+                return await FetchAndSavePlayer(steamAccountId);
+            }
+            else
+            {
+                _logger.LogInformation("El jugador se encuentra en la base de datos");
+                return player;
+            }
+        }
+
+        public async Task<Player> FetchAndSavePlayer(long steamAccountId)
+        {
+
             const string query = @"
             query($steamAccountId: Long!) {
                 player(steamAccountId: $steamAccountId) {
@@ -41,46 +60,50 @@ namespace StratzAPI.Repositories
             }";
 
             _logger.LogInformation("Extrayendo data del jugador con id: {steamAccountId}", steamAccountId);
-            var playerData = await _graphQLService.SendGraphQLQueryAsync<PlayerResponseType>(query, new { steamAccountId });
-
-            if (playerData == null)
-            {
-                _logger.LogError("No se extrajo la data correctamente");
-                return;
-            }
+            var playerData = await _graphQLService.SendGraphQLQueryAsync<PlayerResponseType>(query, 
+                            new { steamAccountId }) ?? throw new Exception("No se extrajo la data del jugador correctamente");
+            _logger.LogInformation("Data del jugador con id {steamAccountId} extraida correctamente", steamAccountId);
 
             Player player = Map(playerData.Player);
 
-            await AddPlayerAsync(player);
+            return player;
         }
 
 
         public Player Map(PlayerDto playerDto)
         {
-            return new Player
+            _logger.LogInformation("Iniciando mapeo de datos del jugador");
+
+            try
             {
-                Id = playerDto.SteamAccountId,
-                Name = playerDto.SteamAccount.ProSteamAccount.Name,
-                RealName = playerDto.SteamAccount.ProSteamAccount.RealName,
-                TeamId = playerDto.SteamAccount.ProSteamAccount.TeamId,
-                IsLocked = playerDto.SteamAccount.ProSteamAccount.IsLocked,
-                IsPro = playerDto.SteamAccount.ProSteamAccount.IsPro,
-                TotalEarnings = playerDto.SteamAccount.ProSteamAccount.TotalEarnings,
-                Birthday = Utils.ConvertUnixToDateTime(playerDto.SteamAccount.ProSteamAccount.Birthday),
-                Position = playerDto.SteamAccount.ProSteamAccount.Position,
-                CountryCode = playerDto.SteamAccount?.CountryCode,
-            };
+                Player player = new()
+                {
+                    Id = playerDto.SteamAccountId,
+                    Name = playerDto.SteamAccount.ProSteamAccount.Name,
+                    RealName = playerDto.SteamAccount.ProSteamAccount.RealName,
+                    TeamId = playerDto.SteamAccount.ProSteamAccount.TeamId,
+                    IsLocked = playerDto.SteamAccount.ProSteamAccount.IsLocked,
+                    IsPro = playerDto.SteamAccount.ProSteamAccount.IsPro,
+                    TotalEarnings = playerDto.SteamAccount.ProSteamAccount.TotalEarnings,
+                    Birthday = Utils.ConvertUnixToDateTime(playerDto.SteamAccount.ProSteamAccount.Birthday),
+                    Position = playerDto.SteamAccount.ProSteamAccount.Position,
+                    CountryCode = playerDto.SteamAccount?.CountryCode,
+                };
+
+                _logger.LogInformation("Mapeo exitoso para el jugador: {player.Id}, {player.Name}", player.Id, player.Name);
+
+                return player;
+            } catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en el mapeo del jugador con id: {playerDto.SteamAccountId}", playerDto.SteamAccountId);
+                throw;
+            }
         }
 
         public async Task AddPlayerAsync(Player player)
         {
             _context.Player.Add(player);
             await _context.SaveChangesAsync();
-        }
-
-        public bool GetPlayer(long playerId)
-        {
-            return _context.Player.
         }
     }
 }

@@ -23,7 +23,7 @@ namespace StratzAPI.Controllers
             _logger.LogInformation("Ingresando jugador con id {playerId}", playerId);
             try
             {
-                await _playerRepository.GetPlayerData(playerId);
+                
                 return Ok("Datos del jugador guardados correctamente");
             }
             catch (Exception ex)

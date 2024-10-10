@@ -11,19 +11,38 @@ namespace StratzAPI.Repositories
         private readonly AppDbContext _context;
         private readonly ILogger<LeagueRepository> _logger;
         private readonly GraphQLService _graphQLService;
+        private readonly TeamRepository _teamRepository;
 
-        public LeagueRepository(AppDbContext context, ILogger<LeagueRepository> logger, GraphQLService graphQLService)
+        public LeagueRepository(AppDbContext context, ILogger<LeagueRepository> logger,
+                                GraphQLService graphQLService, TeamRepository teamRepository)
         {
             _context = context;
             _logger = logger;
             _graphQLService = graphQLService;
+            _teamRepository = teamRepository;
+        }
+
+        public async Task GetOrFetchLeagueAsync(int leagueId)
+        {
+            League? league = await _context.League.FindAsync(leagueId);
+
+            if (league != null)
+            {
+                _logger.LogInformation("La liga si esta presente en la base de datos, se actualizara los datos de los jugadores");
+                await GetTeamPlayers(leagueId, league);
+
+            } else
+            {
+                _logger.LogInformation("La liga con id {leagueId} no se encuentra en la base de datos, extrayendo datos", leagueId);
+                await GetLeagueData(leagueId);
+            }
         }
 
         public async Task GetLeagueData(int leagueId)
         {
             const string query = @"
-            query($id: Int!) {
-                league(id: $teamId) {
+            query($leagueId: Int!) {
+                league(id: $leagueId) {
                     id
                     name
                     banner
@@ -47,7 +66,7 @@ namespace StratzAPI.Repositories
                 }
             }";
 
-            _logger.LogInformation("Extrayendo data del equipo con id {leagueId} de la API", leagueId);
+            _logger.LogInformation("Extrayendo data de la liga con id {leagueId} de la API", leagueId);
             var leagueData = await _graphQLService.SendGraphQLQueryAsync<LeagueResponseType>(query, new { leagueId });
 
             if (leagueData == null)
@@ -56,8 +75,47 @@ namespace StratzAPI.Repositories
                 return;
             }
 
+            _logger.LogInformation("Se extrajo la data del torneo con id: {leagueId} de nombre: {leagueData.League.DisplayName}",
+                                                leagueId, leagueData.League.DisplayName);
+
             League league = Map(leagueData.League);
             await AddLeagueAsync(league);
+            await GetTeamPlayers(leagueId, league);
+        }
+
+        public async Task GetTeamPlayers(int leagueId, League league)
+        {
+            const string query = @"
+            query($leagueId: Int!) {
+                league(id: $leagueId) {
+                    tables {
+                        tableTeams {
+                            teamId
+                        }
+                    }
+                }
+            }";
+
+            _logger.LogInformation("Extrayendo data de la liga con id {leagueId} de la API", leagueId);
+            var leagueData = await _graphQLService.SendGraphQLQueryAsync<LeagueTeamReponseType>(query, new { leagueId });
+
+            if (leagueData == null)
+            {
+                _logger.LogError("No se extrajo la data correctamente");
+                return;
+            }
+
+            await SaveTeamPlayers(leagueData, league);
+        }
+
+        public async Task SaveTeamPlayers(LeagueTeamReponseType leagueReponse, League league)
+        {
+            foreach (var team in leagueReponse.League.Tables.TableTeams)
+            {
+                _logger.LogInformation("Ingresando data del equipo con id {team.teamId} que participa" +
+                                                " en la liga con id {league.Id}", team.TeamId, league.Id);
+                await _teamRepository.CreateAndSaveTeamPlayersQuery(team.TeamId, league);
+            }
         }
 
         public League Map(LeagueDto leagueDto)
@@ -87,13 +145,8 @@ namespace StratzAPI.Repositories
 
         public async Task AddLeagueAsync(League league)
         {
-            _context.Add(league);
+            _context.League.Add(league);
             await _context.SaveChangesAsync();
-        }
-
-        public bool GetTeam(int id)
-        {
-            return _context.League.Any(x => x.Id == id);
         }
     }
 }

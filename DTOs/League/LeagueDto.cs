@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Banner { get; set; }
-        public decimal? BasePrizePool { get; set; }
+        public int? BasePrizePool { get; set; }
         public long? StopSalesTime { get; set; }
         public string? Tier { get; set; }
         public string? Region { get; set; }
