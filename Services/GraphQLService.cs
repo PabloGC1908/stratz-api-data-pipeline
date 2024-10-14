@@ -40,13 +40,21 @@ namespace StratzAPI.Services
                     {
                         foreach (var error in response.Errors)
                         {
-                            _logger.LogError("GraphQL Error: {Message}", error.Message);
+                            if (error.Message.Contains("429") || error.Message.Contains("Too Many Requests"))
+                            {
+                                _logger.LogWarning("Se ha excedido el límite de peticiones a la API. Mensaje: {Message}", error.Message);
+                            }
+                            else
+                            {
+                                _logger.LogError("GraphQL Error: {Message}", error.Message);
+                            }
                         }
                     }
                     else
                     {
                         _logger.LogError("Error desconocido al realizar la consulta GraphQL.");
                     }
+
                     return default;
                 }
 
@@ -59,5 +67,6 @@ namespace StratzAPI.Services
                 return default;
             }
         }
+
     }
 }

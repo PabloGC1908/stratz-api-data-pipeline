@@ -1,6 +1,5 @@
 ﻿using StratzAPI.Data;
 using StratzAPI.DTOs.League;
-using StratzAPI.DTOs.Team;
 using StratzAPI.Models;
 using StratzAPI.Services;
 
@@ -24,21 +23,22 @@ namespace StratzAPI.Repositories
 
         public async Task GetOrFetchLeagueAsync(int leagueId)
         {
+            _logger.LogInformation("Viendo si el torneo {leagueId} se encuentra en la base de datos", leagueId);
             League? league = await _context.League.FindAsync(leagueId);
 
             if (league != null)
             {
-                _logger.LogInformation("La liga si esta presente en la base de datos, se actualizara los datos de los jugadores");
-                await GetTeamPlayers(leagueId, league);
-
-            } else
+                _logger.LogInformation("La liga si esta presente en la base de datos, actualizando datos de los equipos");
+                await ExtractTeamsByLeagueId(leagueId, league);
+            } 
+            else
             {
                 _logger.LogInformation("La liga con id {leagueId} no se encuentra en la base de datos, extrayendo datos", leagueId);
-                await GetLeagueData(leagueId);
+                await GetAndSaveLeagueData(leagueId);
             }
         }
 
-        public async Task GetLeagueData(int leagueId)
+        public async Task GetAndSaveLeagueData(int leagueId)
         {
             const string query = @"
             query($leagueId: Int!) {
@@ -80,10 +80,10 @@ namespace StratzAPI.Repositories
 
             League league = Map(leagueData.League);
             await AddLeagueAsync(league);
-            await GetTeamPlayers(leagueId, league);
+            await ExtractTeamsByLeagueId(leagueId, league);
         }
 
-        public async Task GetTeamPlayers(int leagueId, League league)
+        public async Task ExtractTeamsByLeagueId(int leagueId, League league)
         {
             const string query = @"
             query($leagueId: Int!) {
@@ -101,20 +101,19 @@ namespace StratzAPI.Repositories
 
             if (leagueData == null)
             {
-                _logger.LogError("No se extrajo la data correctamente");
-                return;
+                throw new Exception("Error en la extraccion de la data");
             }
 
-            await SaveTeamPlayers(leagueData, league);
+            await HandleLeagueTeamsData(leagueData, league);
         }
 
-        public async Task SaveTeamPlayers(LeagueTeamReponseType leagueReponse, League league)
+        public async Task HandleLeagueTeamsData(LeagueTeamReponseType leagueReponse, League league)
         {
             foreach (var team in leagueReponse.League.Tables.TableTeams)
             {
                 _logger.LogInformation("Ingresando data del equipo con id {team.teamId} que participa" +
                                                 " en la liga con id {league.Id}", team.TeamId, league.Id);
-                await _teamRepository.CreateAndSaveTeamPlayersQuery(team.TeamId, league);
+                await _teamRepository.GetOrFetchTeam(team.TeamId, league);
             }
         }
 

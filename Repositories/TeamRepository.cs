@@ -1,4 +1,5 @@
-﻿using StratzAPI.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using StratzAPI.Data;
 using StratzAPI.DTOs.Team;
 using StratzAPI.Models;
 using StratzAPI.Services;
@@ -21,6 +22,23 @@ namespace StratzAPI.Repositories
             _playerRepository = playerRepository;
         }
 
+        public async Task GetOrFetchTeam(int teamId, League league)
+        {
+            _logger.LogInformation("Viendo si el equipo {teamId} se encuentra en la base de datos", teamId);
+            Team? team = await _context.Team.FindAsync(teamId);
+
+            if (team != null)
+            {
+                _logger.LogInformation("El equipo esta en la base de datos, actualizando jugadores");
+                await FetchAndSavePlayers(teamId, league, team);
+            }
+            else
+            {
+                _logger.LogInformation("El equipo no se esta en la base de datos, haciendo peticion a la API");
+                await CreateAndSaveTeamPlayersQuery(teamId, league);
+            }
+        }
+
         public async Task CreateAndSaveTeamPlayersQuery(int teamId, League league)
         {
             const string query = @"
@@ -38,9 +56,6 @@ namespace StratzAPI.Repositories
                     baseLogo
                     bannerLogo
                     countryName
-                    members {
-                        steamAccountId
-                    }
                 }
             }";
 
@@ -69,32 +84,7 @@ namespace StratzAPI.Repositories
 
                 _logger.LogInformation("El equipo con id {teamId} fue guardado correctamente", teamId);
 
-                using var transaction = _context.Database.BeginTransaction();
-                try
-                {
-                    foreach (var playerId in teamData.Team.Members)
-                    {
-                        Player player = await _playerRepository.FetchAndSavePlayer(playerId.SteamAccountId);
-                        Team? playerTeam = await _context.Team.FindAsync(player.TeamId);
 
-                        if (playerTeam == null)
-                        {
-                            _logger.LogInformation("El jugador se encuentra en otro equipo, probablemente por que es standim," +
-                                                        " añadiendo su equipo a la base de datos");
-                            await CreateAndSaveTeamQuery((int)player.TeamId);
-                        }
-                        
-                        await _playerRepository.AddPlayerAsync(player);
-                        await AddLeagueTeamPlayer(league, team, player);
-                    }
-
-                    await transaction.CommitAsync();
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    _logger.LogError("Error al guardar los jugadores: {ex.Message}", ex.Message);
-                }
             }
             catch (Exception ex)
             {
@@ -102,7 +92,7 @@ namespace StratzAPI.Repositories
             }
         }
 
-        public async Task CreateAndSaveTeamQuery(int teamId)
+        public async Task FetchTeamQuery(int teamId)
         {
             const string query = @"
             query($teamId: Int!) {
@@ -152,6 +142,82 @@ namespace StratzAPI.Repositories
                 _logger.LogError(ex, "Error durante el mapeo de TeamDto con ID: {Id}", teamData.Team.Id);
                 throw;
             }
+        }
+
+        public async Task FetchAndSavePlayers(int teamId, League league, Team team)
+        {
+            const string query = @"
+            query($teamId: Int!) {
+                team(teamId: $teamId) {
+                    members {
+                        steamAccountId
+                    }
+                }
+            }";
+
+            _logger.LogInformation("Extrayendo data del equipo con id {teamId} de la API", teamId);
+            var teamData = await _graphQLService.SendGraphQLQueryAsync<TeamMembersResponseType>(query, new { teamId });
+
+            if(teamData == null)
+            {
+                throw new Exception("No se extrajo la data correctamente");
+            }
+
+            await SavePlayers(teamData, league, team);
+        }
+
+        public async Task SavePlayers(TeamMembersResponseType teamMembers, League league, Team team)
+        {
+            foreach (var playerId in teamMembers.Team.Members)
+            {
+                try
+                {
+                    var existingPlayer = await _context.Player.FirstOrDefaultAsync(p => p.Id == playerId.SteamAccountId);
+                    Player player;
+
+                    if (existingPlayer != null)
+                    {
+                        player = existingPlayer;
+                        _logger.LogInformation("El jugador con SteamAccountId {playerId.SteamAccountId} ya existe en la base de datos.", playerId.SteamAccountId);
+                    }
+                    else
+                    {
+                        player = await _playerRepository.FetchAndSavePlayer(playerId.SteamAccountId);
+
+                        if (player == null)
+                        {
+                            _logger.LogWarning("No se pudo obtener información del jugador con SteamAccountId {playerId.SteamAccountId}. Saltando...", playerId.SteamAccountId);
+                            continue;
+                        }
+                    }
+
+                    var existingLeagueTeamPlayer = await _context.LeagueTeamPlayer
+                        .FirstOrDefaultAsync(ltp => ltp.LeagueId == league.Id && ltp.TeamId == team.Id && ltp.PlayerId == player.Id);
+
+                    if (existingLeagueTeamPlayer != null)
+                    {
+                        _logger.LogInformation("El jugador con id {player.Id} ya está registrado en el equipo {team.Id} para la liga {league.Id}.", player.Id, team.Id, league.Id);
+                        continue;
+                    }
+
+                    await AddLeagueTeamPlayer(league, team, player);
+
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Error al procesar el jugador con SteamAccountId {playerId.SteamAccountId}: {ex.Message}", playerId.SteamAccountId, ex.Message);
+                }
+            }
+        }
+
+
+
+        public async Task<bool> IsPlayerInTeamLeague(int leagueId, int teamId, long playerId)
+        {
+            var exists = await _context.LeagueTeamPlayer
+                            .AnyAsync(ltp => ltp.LeagueId == leagueId && ltp.TeamId == teamId && ltp.PlayerId == playerId);
+            return exists;
         }
 
 

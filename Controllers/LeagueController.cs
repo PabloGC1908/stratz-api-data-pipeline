@@ -25,7 +25,7 @@ namespace StratzAPI.Controllers
             _logger.LogInformation("Ingresando partida con id: {leagueId}", leagueId);
             try
             {
-                await _leagueRepository.GetLeagueData(leagueId);
+                await _leagueRepository.GetOrFetchLeagueAsync(leagueId);
                 return Ok("Datos guardados correctamente");
             }
             catch (Exception ex)

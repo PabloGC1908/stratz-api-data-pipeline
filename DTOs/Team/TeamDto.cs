@@ -14,7 +14,5 @@
         public string? BaseLogo { get; set; }
         public string? BannerLogo { get; set; }
         public string? CountryName { get; set; }
-
-        public ICollection<TeamMember>? Members { get; set; }
     }
 }
