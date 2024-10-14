@@ -24,49 +24,69 @@ namespace StratzAPI.Services
 
         public async Task<T?> SendGraphQLQueryAsync<T>(string query, object variables)
         {
-            try
+            const int maxRetries = 5;
+            int retryCount = 0;
+            TimeSpan delay = TimeSpan.FromSeconds(2);
+
+            while (retryCount < maxRetries)
             {
-                var request = new GraphQLRequest
+                try
                 {
-                    Query = query,
-                    Variables = variables
-                };
-
-                var response = await _client.SendQueryAsync<T>(request);
-
-                if (response == null || response.Data == null)
-                {
-                    if (response?.Errors != null)
+                    var request = new GraphQLRequest
                     {
-                        foreach (var error in response.Errors)
+                        Query = query,
+                        Variables = variables
+                    };
+
+                    var response = await _client.SendQueryAsync<T>(request);
+
+                    if (response == null || response.Data == null)
+                    {
+                        if (response?.Errors != null)
                         {
-                            if (error.Message.Contains("429") || error.Message.Contains("Too Many Requests"))
-                            {
-                                _logger.LogWarning("Se ha excedido el límite de peticiones a la API. Mensaje: {Message}", error.Message);
-                            }
-                            else
+                            foreach (var error in response.Errors)
                             {
                                 _logger.LogError("GraphQL Error: {Message}", error.Message);
                             }
                         }
+                        else
+                        {
+                            _logger.LogError("Error desconocido al realizar la consulta GraphQL.");
+                        }
+                        return default;
+                    }
+
+                    _logger.LogInformation("Consulta GraphQL ejecutada correctamente.");
+                    return response.Data;
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("ServiceUnavailable") || ex.Message.Contains("503"))
+                    {
+                        retryCount++;
+                        _logger.LogWarning("Petición fallida con status 503 (Service Unavailable). Intento {retryCount} de {maxRetries}. " +
+                                "Esperando {delay.TotalSeconds} segundos antes del reintento...", retryCount, maxRetries, delay.TotalSeconds);
+
+                        if (retryCount >= maxRetries)
+                        {
+                            _logger.LogError("Excedido el número máximo de reintentos. No se pudo completar la consulta GraphQL.");
+                            return default;
+                        }
+
+                        await Task.Delay(delay);
+                        delay = delay * 2;
                     }
                     else
                     {
-                        _logger.LogError("Error desconocido al realizar la consulta GraphQL.");
+                        _logger.LogError("Excepción durante la consulta GraphQL: {Message}", ex.Message);
+                        return default;
                     }
-
-                    return default;
                 }
+            }
 
-                _logger.LogInformation("Consulta GraphQL ejecutada correctamente.");
-                return response.Data;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Excepción durante la consulta GraphQL: {Message}", ex.Message);
-                return default;
-            }
+            return default;
         }
+
 
     }
 }

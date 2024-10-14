@@ -99,11 +99,5 @@ namespace StratzAPI.Repositories
                 throw;
             }
         }
-
-        public async Task AddPlayerAsync(Player player)
-        {
-            _context.Player.Add(player);
-            await _context.SaveChangesAsync();
-        }
     }
 }

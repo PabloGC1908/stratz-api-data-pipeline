@@ -189,6 +189,14 @@ namespace StratzAPI.Repositories
                             _logger.LogWarning("No se pudo obtener información del jugador con SteamAccountId {playerId.SteamAccountId}. Saltando...", playerId.SteamAccountId);
                             continue;
                         }
+
+                        var playerTeam = await _context.Team.FindAsync(player.TeamId);
+
+                        if (playerTeam == null)
+                        {
+                            _logger.LogInformation("No se encontro el equipo en la base de datos, añadiendo el equipo");
+                            await FetchTeamQuery(player.TeamId);
+                        }
                     }
 
                     var existingLeagueTeamPlayer = await _context.LeagueTeamPlayer
@@ -210,16 +218,6 @@ namespace StratzAPI.Repositories
                 }
             }
         }
-
-
-
-        public async Task<bool> IsPlayerInTeamLeague(int leagueId, int teamId, long playerId)
-        {
-            var exists = await _context.LeagueTeamPlayer
-                            .AnyAsync(ltp => ltp.LeagueId == leagueId && ltp.TeamId == teamId && ltp.PlayerId == playerId);
-            return exists;
-        }
-
 
         public Team Map(TeamDto teamDto)
         {
