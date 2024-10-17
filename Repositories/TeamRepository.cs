@@ -22,6 +22,24 @@ namespace StratzAPI.Repositories
             _playerRepository = playerRepository;
         }
 
+        public async Task SaveTeamInLeague(int teamId, int leagueId)
+        {
+            League? league = _context.League.Find(leagueId);
+            Team? team = _context.Team.Find(teamId);
+
+            if(league == null)
+            {
+                return;
+            }
+
+            if (team == null)
+            {
+                return;
+            }
+
+            await FetchAndSavePlayers(teamId, league, team);
+        }
+
         public async Task GetOrFetchTeam(int teamId, League league)
         {
             _logger.LogInformation("Viendo si el equipo {teamId} se encuentra en la base de datos", teamId);

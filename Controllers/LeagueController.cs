@@ -22,7 +22,7 @@ namespace StratzAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> PostLeague(int leagueId)
         {
-            _logger.LogInformation("Ingresando partida con id: {leagueId}", leagueId);
+            _logger.LogInformation("Ingresando liga con id: {leagueId}", leagueId);
             try
             {
                 await _leagueRepository.GetOrFetchLeagueAsync(leagueId);
