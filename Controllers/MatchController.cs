@@ -20,9 +20,43 @@ namespace StratzAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostMatch(long id)
+        public async Task<IActionResult> PostMatch(long matchId)
         {
-            _logger.LogInformation($"Ingresando partida con id: {id}");
+            _logger.LogInformation("Ingresando partida con id: {matchId}", matchId);
+
+
+            try
+            {
+                return Ok("Datos guardados correctamente");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PostLeagueMatches(int leagueId)
+        {
+            _logger.LogInformation("Ingresando partidas de la liga con id: {leagueId}", leagueId);
+
+
+            try
+            {
+                return Ok("Datos guardados correctamente");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PostSerie(long serieId)
+        {
+            _logger.LogInformation("Ingresando serie con id: {serieId}", serieId);
+
+
             try
             {
                 return Ok("Datos guardados correctamente");
