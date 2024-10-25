@@ -7,19 +7,14 @@ namespace StratzAPI.Models
         public long Id { get; set; }
         public bool DidRadiantWin { get; set; }
         public int DurationSeconds { get; set; }
-        public DateTime StartDateTime { get; set; }
-        public DateTime EndDateTime { get; set; }
-        public int FirstBloodTime { get; set; }
-        public int RadiantTeamId { get; set; }
-        public int DireTeamId { get; set; }
-        public int GameVersionId { get; set; }
-        public int SeriesId { get; set; }
+        public DateTime? StartDateTime { get; set; }
+        public DateTime? EndDateTime { get; set; }
+        public int? FirstBloodTime { get; set; }
+        public int? RadiantTeamId { get; set; }
+        public int? DireTeamId { get; set; }
+        public int? GameVersionId { get; set; }
 
-
-        public required Serie Serie { get; set; }
-        public required Team RadiantTeam { get; set; }
-        public required Team DireTeam { get; set; }
-        public MatchStats? MatchStats { get; set; }
+        public ICollection<MatchStats>? MatchStats { get; set; }
         public ICollection<MatchPickBans>? MatchPickBans { get; set; }
         public ICollection<MatchPlayer>? MatchPlayers { get; set; }
     }

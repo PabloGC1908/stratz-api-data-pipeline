@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StratzAPI.Data;
+using StratzAPI.Models;
 using StratzAPI.Repositories;
 using StratzAPI.Services;
 
@@ -11,9 +12,15 @@ builder.Services.AddScoped<GraphQLService>();
 builder.Services.AddScoped<TeamRepository>();
 builder.Services.AddScoped<LeagueRepository>();
 builder.Services.AddScoped<PlayerRepository>();
+builder.Services.AddScoped<MatchRepository>();
+builder.Services.AddScoped<MatchStatsPickBansRepository>();
+builder.Services.AddScoped<MatchPlayerRepository>();
+builder.Services.AddScoped<MatchPlayerStatsRepository>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SQL"));
+    options
+        .UseSqlServer(builder.Configuration.GetConnectionString("SQL"))
+        .LogTo(Console.WriteLine, LogLevel.Information);
 }
 );
 

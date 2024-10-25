@@ -18,6 +18,7 @@ namespace StratzAPI.Services
 
             var STRATZ_API_KEY = Environment.GetEnvironmentVariable("STRATZ_API_KEY");
 
+            _client.HttpClient.DefaultRequestHeaders.Add("User-Agent", "STRATZ_API");
             _client.HttpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", $"{STRATZ_API_KEY}");
         }

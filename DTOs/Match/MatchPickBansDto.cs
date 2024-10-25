@@ -7,6 +7,6 @@
         public int Order { get; set; }
         public bool IsRadiant { get; set; }
         public int PlayerIndex { get; set; }
-        public bool IsCaptain { get; set; }
+        public bool? IsCaptain { get; set; }
     }
 }

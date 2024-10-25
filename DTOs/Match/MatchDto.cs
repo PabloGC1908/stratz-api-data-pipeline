@@ -7,18 +7,18 @@
         public int DurationSeconds { get; set; }
         public long StartDateTime { get; set; }
         public long EndDateTime { get; set; }
-        public int FirstBloodTime { get; set; }
-        public int LeagueId { get; set; }
-        public long RadiantTeamId { get; set; }
-        public long DireTeamId { get; set; }
-        public int GameVersionId { get; set; }
-        public List<double>? WinRates { get; set; }
-        public List<double>? PredictedWinRates { get; set; }
-        public List<int>? RadiantKills { get; set; }
-        public List<int>? DireKills { get; set; }
-        public List<int>? RadiantNetworthLeads { get; set; }
-        public List<int>? RadiantExperienceLeads { get; set; }
-        public List<MatchPickBansDto>? PickBans { get; set; }
-        public List<MatchPlayerDto>? Players { get; set; }
+        public int? FirstBloodTime { get; set; }
+        public int? LeagueId { get; set; }
+        public int? RadiantTeamId { get; set; }
+        public int? DireTeamId { get; set; }
+        public int? GameVersionId { get; set; }
+        public ICollection<decimal>? WinRates { get; set; }
+        public ICollection<decimal>? PredictedWinRates { get; set; }
+        public ICollection<int>? RadiantKills { get; set; }
+        public ICollection<int>? DireKills { get; set; }
+        public ICollection<int>? RadiantNetworthLeads { get; set; }
+        public ICollection<int>? RadiantExperienceLeads { get; set; }
+        public ICollection<MatchPickBansDto>? PickBans { get; set; }
+        public ICollection<MatchPlayerDto>? Players { get; set; }
     }
 }
