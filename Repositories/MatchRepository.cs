@@ -37,7 +37,6 @@ public class MatchRepository
         else
         {
             _logger.LogInformation("Se encontro la partida");
-            return;
         }
     }
 
@@ -126,8 +125,6 @@ public class MatchRepository
     {
         Match match = Map(matchDto);
 
-        using var transaction = await _context.Database.BeginTransactionAsync();
-
         try
         {
             _logger.LogInformation("Ingresando data de la partida a la base de datos");
@@ -150,7 +147,7 @@ public class MatchRepository
             _logger.LogInformation("Añadiendo los valores minimos");
 
 
-            int minCount = new List<int>
+            int maxCount = new List<int>
             {
                 matchDto.WinRates.Count,
                 matchDto.PredictedWinRates.Count,
@@ -158,34 +155,32 @@ public class MatchRepository
                 matchDto.DireKills.Count,
                 matchDto.RadiantNetworthLeads.Count,
                 matchDto.RadiantExperienceLeads.Count
-            }.Min();
+            }.Max();
 
-            _logger.LogInformation("Cantidad de elementos procesados: {minCount}", minCount);
+            _logger.LogInformation("Cantidad de elementos procesados: {maxCount}", maxCount);
 
-            for (int i = 0; i < minCount; i++)
+            for (int i = 0; i < maxCount; i++)
             {
                 MatchStats matchStats = MapMatchStats(
-                                                    matchId: match.Id,
-                                                    min: i,
-                                                    winRate: matchDto.WinRates.ElementAt(i),
-                                                    predictedWinRate: matchDto.PredictedWinRates.ElementAt(i),
-                                                    radiantKills: matchDto.RadiantKills.ElementAt(i),
-                                                    direKills: matchDto.DireKills.ElementAt(i),
-                                                    radiantNetworthLead: matchDto.RadiantNetworthLeads.ElementAt(i),
-                                                    radiantExperienceLead: matchDto.RadiantExperienceLeads.ElementAt(i)
-                                                );
+                    matchId: match.Id,
+                    min: i,
+                    winRate: i < matchDto.WinRates.Count ? matchDto.WinRates.ElementAt(i) : (decimal?)null,
+                    predictedWinRate: i < matchDto.PredictedWinRates.Count ? matchDto.PredictedWinRates.ElementAt(i) : (decimal?)null,
+                    radiantKills: i < matchDto.RadiantKills.Count ? matchDto.RadiantKills.ElementAt(i) : (int?)null,
+                    direKills: i < matchDto.DireKills.Count ? matchDto.DireKills.ElementAt(i) : (int?)null,
+                    radiantNetworthLead: i < matchDto.RadiantNetworthLeads.Count ? matchDto.RadiantNetworthLeads.ElementAt(i) : (int?)null,
+                    radiantExperienceLead: i < matchDto.RadiantExperienceLeads.Count ? matchDto.RadiantExperienceLeads.ElementAt(i) : (int?)null
+                );
 
                 await _context.MatchStats.AddAsync(matchStats);
                 _logger.LogInformation("Guardado matchStats con ID {matchId} y minuto {min}", match.Id, i);
             }
 
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error en alguna parte del ingreso de datos: {ex.Message}", ex.Message);
-            await transaction.RollbackAsync();
+            throw new Exception("Error en alguna parte del ingreso de datos de la partida");
         }
     }
 
@@ -205,8 +200,8 @@ public class MatchRepository
         };
     }
 
-    public MatchStats MapMatchStats(long matchId, int min, decimal winRate, decimal predictedWinRate, 
-                        int radiantKills, int direKills, int radiantNetworthLead, int radiantExperienceLead)
+    public MatchStats MapMatchStats(long matchId, int min, decimal? winRate, decimal? predictedWinRate, 
+                        int? radiantKills, int? direKills, int? radiantNetworthLead, int? radiantExperienceLead)
     {
         return new MatchStats
         {

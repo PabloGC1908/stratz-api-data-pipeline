@@ -1,4 +1,6 @@
-﻿using StratzAPI.Data;
+﻿using GraphQL.Validation;
+using Newtonsoft.Json;
+using StratzAPI.Data;
 using StratzAPI.DTOs.League.Serie;
 using StratzAPI.Models;
 using StratzAPI.Services;
@@ -37,8 +39,21 @@ public class SerieRepository
 
             if (leagueSeriesDto == null)
             {
+                _logger.LogError("No se obtuvo ninguna serie para la liga con ID {leagueId}", leagueId);
                 throw new Exception("Problema al momento de extraer la data");
             }
+
+            if (leagueSeriesDto.Series == null)
+            {
+                throw new Exception("Problema al mapeo de las series");
+            }
+
+            if (leagueSeriesDto.Series == null || !leagueSeriesDto.Series.Any())
+            {
+                _logger.LogWarning("No se encontraron series para la liga con ID {leagueId}", leagueId);
+                return;
+            }
+
 
             await ProcessLeagueSeries(leagueSeriesDto, leagueId);
         }
@@ -47,54 +62,81 @@ public class SerieRepository
     public async Task<LeagueSerieDto?> GetLeagueSeries(int leagueId)
     {
         const string query = @"
-            query($leagueId: Int!) {
-                league(id: $leagueId) {
-                    series(take: 1000) {
+        query ($leagueId: Int!) {
+            league(id: $leagueId) {
+                series(take: 1000) {
+                    id
+                    matches {
                         id
-                        type
-                        matches {
-                            id
-                        }
                     }
+                    type
                 }
-            }";
+            }
+        }";
 
-        var leagueSerieResponse = await _graphQLService.SendGraphQLQueryAsync<LeagueSerieDto>(query, new { leagueId });
+        _logger.LogInformation("Consulta enviada: {Query}", query);
 
-        if (leagueSerieResponse == null)
+        var leagueSerieResponse = await _graphQLService.SendGraphQLQueryAsync<LeagueSerieResponseType>(query, new { leagueId });
+        _logger.LogInformation("Respuesta de la API: {Response}", JsonConvert.SerializeObject(leagueSerieResponse));
+
+
+        if (leagueSerieResponse == null || leagueSerieResponse.League == null)
         {
-            _logger.LogError("No se extrajo la data correctamente");
+            _logger.LogError("No se obtuvo ninguna respuesta de la consulta o la estructura es incorrecta.");
+            return null;
+        }
+
+        var series = leagueSerieResponse.League.Series;
+        if (series == null || !series.Any())
+        {
+            _logger.LogWarning("No se encontraron series para la liga con ID {leagueId}.", leagueId);
             return null;
         }
 
         _logger.LogInformation("Se extrajo las series de la liga correctamente");
 
-        return leagueSerieResponse;
+        return leagueSerieResponse.League;
     }
 
     public async Task ProcessLeagueSeries(LeagueSerieDto leagueSerieDto, int leagueId)
     {
         foreach (var leagueSerie in leagueSerieDto.Series)
         {
-            await ProcessSerie(leagueSerie.Matches, leagueId);
+            await ProcessSerie(leagueSerie.Matches, leagueId, leagueSerie.Id, leagueSerie.Type);
         }
     }
 
-    public async Task ProcessSerie(ICollection<MatchIdDto> matchIdDtos, int leagueId)
+    public async Task ProcessSerie(ICollection<MatchIdDto> matchIdDtos, int leagueId, long serieId, string type)
     {
-        foreach(var matchId in matchIdDtos)
+        foreach (var matchId in matchIdDtos)
         {
-            await _matchRepository.GetOrFetchMatch(matchId.Id);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                await _matchRepository.GetOrFetchMatch(matchId.Id);
+                Serie serie = Map(serieId, leagueId, matchId.Id, type);
+
+                await _context.Serie.AddAsync(serie);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error en alguna parte del ingreso de datos: {ex.Message}", ex.Message);
+                await transaction.RollbackAsync();
+            }
         }
     }
 
-    public Serie Map(SerieDto serieDto, int leagueId)
+    public Serie Map(long serieId, int leagueId, long matchId, string type)
     {
         return new Serie
         {
-            Id = serieDto.Id,
+            SerieId = serieId,
             LeagueId = leagueId,
-            Type = serieDto.Type,
+            MatchId = matchId,
+            Type = type ?? string.Empty,
             Phase = "",
         };
     }

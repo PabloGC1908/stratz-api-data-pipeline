@@ -16,6 +16,7 @@ builder.Services.AddScoped<MatchRepository>();
 builder.Services.AddScoped<MatchStatsPickBansRepository>();
 builder.Services.AddScoped<MatchPlayerRepository>();
 builder.Services.AddScoped<MatchPlayerStatsRepository>();
+builder.Services.AddScoped<SerieRepository>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options

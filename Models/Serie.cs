@@ -3,6 +3,7 @@
     public class Serie
     {
         public long Id { get; set; }
+        public long SerieId { get; set; }
         public int? LeagueId { get; set; }
         public League? League { get; set; }
         public long? MatchId { get; set; }
