@@ -48,7 +48,6 @@ namespace StratzAPI.Repositories
                         proSteamAccount {
                             name
                             realName
-                            teamId
                             isLocked
                             isPro
                             totalEarnings
@@ -79,15 +78,14 @@ namespace StratzAPI.Repositories
                 Player player = new()
                 {
                     Id = playerDto.SteamAccountId,
-                    Name = playerDto.SteamAccount.ProSteamAccount.Name,
-                    RealName = playerDto.SteamAccount.ProSteamAccount.RealName,
-                    TeamId = playerDto.SteamAccount.ProSteamAccount.TeamId,
-                    IsLocked = playerDto.SteamAccount.ProSteamAccount.IsLocked,
-                    IsPro = playerDto.SteamAccount.ProSteamAccount.IsPro,
-                    TotalEarnings = playerDto.SteamAccount.ProSteamAccount.TotalEarnings,
-                    Birthday = Utils.ConvertUnixToDateTime(playerDto.SteamAccount.ProSteamAccount.Birthday),
-                    Position = playerDto.SteamAccount.ProSteamAccount.Position,
-                    CountryCode = playerDto.SteamAccount?.CountryCode,
+                    Name = playerDto?.SteamAccount?.ProSteamAccount?.Name ?? null,
+                    RealName = playerDto?.SteamAccount?.ProSteamAccount?.RealName ?? null,
+                    IsLocked = playerDto?.SteamAccount?.ProSteamAccount?.IsLocked ?? null,
+                    IsPro = playerDto?.SteamAccount?.ProSteamAccount?.IsPro ?? null,
+                    TotalEarnings = playerDto?.SteamAccount?.ProSteamAccount?.TotalEarnings ?? null,
+                    Birthday = Utils.ConvertUnixToDateTime(playerDto?.SteamAccount?.ProSteamAccount?.Birthday),
+                    Position = playerDto?.SteamAccount?.ProSteamAccount?.Position ?? null,
+                    CountryCode = playerDto?.SteamAccount?.CountryCode ?? null,
                 };
 
                 _logger.LogInformation("Mapeo exitoso para el jugador: {player.Id}, {player.Name}", player.Id, player.Name);

@@ -17,6 +17,5 @@ namespace StratzAPI.Models
         public string? BannerLogo { get; set; }
         public string? CountryName { get; set; }
 
-        public ICollection<Player>? Players { get; set; }
     }
 }

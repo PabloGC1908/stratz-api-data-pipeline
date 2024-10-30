@@ -21,6 +21,7 @@ namespace StratzAPI.Controllers
         public async Task<IActionResult> PostPlayer(long playerId)
         {
             _logger.LogInformation("Ingresando jugador con id {playerId}", playerId);
+            await _playerRepository.GetOrFetchPlayerAsync(playerId);
             try
             {
                 

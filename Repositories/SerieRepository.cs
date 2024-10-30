@@ -1,4 +1,5 @@
 ﻿using GraphQL.Validation;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using StratzAPI.Data;
 using StratzAPI.DTOs.League.Serie;
@@ -115,8 +116,15 @@ public class SerieRepository
             try
             {
                 await _matchRepository.GetOrFetchMatch(matchId.Id);
-                Serie serie = Map(serieId, leagueId, matchId.Id, type);
 
+                bool serieExists = await _context.Serie.AnyAsync(s => s.Id == serieId && s.MatchId == matchId.Id);
+                if (serieExists)
+                {
+                    _logger.LogInformation("La serie con Id {serieId} y MatchId {matchId.Id} ya existe en la base de datos. Continuando con el siguiente valor...", serieId, matchId.Id);
+                    continue;
+                }
+
+                Serie serie = Map(serieId, leagueId, matchId.Id, type);
                 await _context.Serie.AddAsync(serie);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -128,6 +136,7 @@ public class SerieRepository
             }
         }
     }
+
 
     public Serie Map(long serieId, int leagueId, long matchId, string type)
     {
