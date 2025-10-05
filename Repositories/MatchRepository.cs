@@ -103,6 +103,306 @@ public class MatchRepository
                     backpack1Id
                     backpack2Id
                     neutral0Id
+
+                    playbackData {
+                        abilityLearnEvents {
+                          time
+                          abilityId
+                          levelObtained
+                          level
+                          isUltimate
+                          isTalent
+                          isMaxLevel
+                        }
+                        abilityUsedEvents{
+                          time
+                          abilityId
+                          attacker
+                          target
+                        }
+        
+                        itemUsedEvents {
+                          time
+                          itemId
+                          attacker
+                          target
+                        }
+      	
+                        playerUpdatePositionEvents {
+                          time
+                          x
+                          y
+                        }
+        
+                        playerUpdateGoldEvents {
+                          time
+                          gold
+                          unreliableGold
+                          networth
+                          networthDifference
+                        }
+        
+                        playerUpdateAttributeEvents {
+                          time
+                          agi
+                          int
+                          str
+                        }
+        
+                        playerUpdateLevelEvents {
+                          time
+                          level
+                        }
+        
+                        playerUpdateHealthEvents {
+                          time
+                          hp
+                          maxHp
+                          mp
+                          maxMp
+                        }
+        
+                        playerUpdateBattleEvents {
+                          time
+                          damageMinMax
+                          damageBonus
+                          hpRegen
+                          mpRegen
+                        }
+        
+                        killEvents {
+                          time
+                          attacker
+                          isFromIllusion
+                          target
+                          byAbility
+                          byItem
+                          gold
+                          xp
+                          positionX
+                          positionY
+                          assist
+                          isSolo
+                          isGank
+                          isInvisible
+                          isSmoke
+                          isTpRecently
+                          isRuneEffected
+                        }
+        
+                        assistEvents {
+                          time
+                          attacker
+                          target
+                          gold
+                          xp
+                          subTime
+                          positionX
+                          positionY
+                        }
+        
+                        csEvents {
+                          time
+                          attacker
+                          isFromIllusion
+                          npcId
+                          byAbility
+                          byItem
+                          gold
+                          xp
+                          positionX
+                          positionY
+                          isCreep
+                          isNeutral
+                          isAncient
+                          mapLocation
+                        }
+        
+                        goldEvents {
+                          time
+                          amount
+                          reason
+                          npcId
+                          isValidForStats
+                        }
+        
+                        experienceEvents {
+                          time
+                          amount
+                          reason
+                          positionX
+                          positionY
+                        }
+        
+                        healEvents {
+                          time
+                          attacker
+                          target
+                          value
+                          byAbility
+                          byItem
+                        }
+        
+                        heroDamageEvents {
+                          time
+                          attacker
+                          target
+                          value
+                          byAbility
+                          byItem
+                          damageType
+                          fromNpc
+                          toNpc
+                          fromIllusion
+                          toIllusion
+                          isPhysicalAttack
+                          isSourceMainHero
+                          isTargetMainHero
+                        }
+      	
+                        towerDamageEvents {
+                          time
+                          attacker
+                          npcId
+                          damage
+                          byAbility
+                          byItem
+                          fromNpc
+                        }
+        
+                        inventoryEvents {
+                          time
+                          item0 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+                          item1 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+                          item2 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+                          item3 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+                          item4 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+                          item5 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+          
+                          backPack0 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+          
+                          backPack1 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+          
+                          backPack2 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+          
+                          teleport0 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+          
+                          neutral0 {
+                            itemId
+                            charges
+                            secondaryCharges
+                          }
+                        }
+        
+                        purchaseEvents {
+                          time
+                          itemId
+                        }
+        
+                        buyBackEvents {
+                          time
+                          heroId
+                          deathTimeRemaining
+                          cost
+                        }
+                        streakEvents {
+                          time
+                          heroId
+                          type
+                          value
+                        }
+        
+                        runeEvents {
+                          time
+                          rune
+                          action
+                          gold
+                          positionX
+                          positionY
+                        }
+        
+                        spiritBearInventoryEvents {
+                          time
+                          item0 {
+                            itemId
+                          }
+                          item1 {
+                            itemId
+                          }
+                          item2 {
+                            itemId
+                          }
+                          item3 {
+                            itemId
+                          }
+                          item4 {
+                            itemId
+                          }
+                          item5 {
+                            itemId
+                          }
+          
+                          backPack0 {
+                            itemId
+                          }
+          
+                          backPack1 {
+                            itemId
+                          }
+          
+                          backPack2 {
+                            itemId
+                          }
+          
+                          teleport0 {
+                            itemId
+                          }
+          
+                          neutral0 {
+                            itemId
+                          }
+                        }
+                    }
                 }
             }
         }";

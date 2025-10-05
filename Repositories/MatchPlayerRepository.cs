@@ -19,7 +19,7 @@ namespace StratzAPI.Repositories
         {
             foreach (var matchPlayerDto in matchPlayersDto)
             {
-                MatchPlayer matchPlayer = MpdToMp(matchPlayerDto, matchId);
+                MatchPlayer matchPlayer = MatchPlayerDtoToMatchPlayer(matchPlayerDto, matchId);
                 await _context.MatchPlayer.AddAsync(matchPlayer);
             }
 
@@ -31,7 +31,7 @@ namespace StratzAPI.Repositories
                                         .Where(mP => mP.MatchId == matchId && mP.PlayerId == matchPlayerDto.SteamAccountId)
                                         .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
 
-                MatchPlayerItems matchPlayerItems = MpdToMpi(matchPlayerDto, matchPlayerDb.Id);
+                MatchPlayerItems matchPlayerItems = MatchPlayerDtoToMatchPlayerItems(matchPlayerDto, matchPlayerDb.Id);
 
                 await _context.MatchPlayerItems.AddAsync(matchPlayerItems);
             }
@@ -39,7 +39,7 @@ namespace StratzAPI.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public MatchPlayer MpdToMp(MatchPlayerDto matchPlayerDto, long matchId)
+        public MatchPlayer MatchPlayerDtoToMatchPlayer(MatchPlayerDto matchPlayerDto, long matchId)
         {
             return new MatchPlayer
             {
@@ -69,7 +69,7 @@ namespace StratzAPI.Repositories
             };
         }
 
-        public MatchPlayerItems MpdToMpi(MatchPlayerDto matchPlayerDto, long id)
+        public MatchPlayerItems MatchPlayerDtoToMatchPlayerItems(MatchPlayerDto matchPlayerDto, long id)
         {
             return new MatchPlayerItems
             {
