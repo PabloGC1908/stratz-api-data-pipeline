@@ -1,4 +1,7 @@
 ﻿using StratzAPI.Data;
+using StratzAPI.DTOs.Match;
+using StratzAPI.DTOs.Match.Events;
+using StratzAPI.Models.Events;
 using StratzAPI.Services;
 
 namespace StratzAPI.Repositories
@@ -17,9 +20,45 @@ namespace StratzAPI.Repositories
             _graphQLService = graphQLService;
         }
 
-        public async Task ProcessPlaybackMatchPlayerData(ICollection<DTOs.Match.PlaybackDataDto> playbackData)
+        public async Task ProcessPlaybackMatchPlayerData(ICollection<PlaybackDataDto> playbackData, long matchPlayerId)
+        {
+            foreach (var abilityLearnEventsDto in playbackData)
+            {
+
+            }
+        }
+
+        public AbilityLearnEvent mapAbilityLearnEvent(AbilityLearnEventDto abilityLearnEventDto, long matchPlayerId)
+        {
+            return new AbilityLearnEvent
+            {
+                MatchPlayerId = matchPlayerId,
+                Time = abilityLearnEventDto.Time,
+                AbilityId = abilityLearnEventDto.AbilityId,
+                LevelObtained = abilityLearnEventDto.LevelObtained,
+                Level = abilityLearnEventDto.Level,
+                IsUltimate = abilityLearnEventDto.IsUltimate,
+                IsTalent = abilityLearnEventDto.IsTalent,
+                IsMaxLevel = abilityLearnEventDto.IsMaxLevel
+            };
+        }
+
+        public AbilityUsedEvent mapAbilityUsedEvent(AbilityUsedEventDto abilityUsedEventDto, long matchPlayerId)
+        {
+            return new AbilityUsedEvent
+            {
+                MatchPlayerId = matchPlayerId,
+                Time = abilityUsedEventDto.Time,
+                AbilityId = abilityUsedEventDto.AbilityId,
+                Attacker = abilityUsedEventDto.Attacker,
+                Target = abilityUsedEventDto.Target
+            };
+        }
+
+        public AssistEvent mapAssistEvent(AssistEventDto assistEventDto)
         {
 
         }
+
     }
 }
