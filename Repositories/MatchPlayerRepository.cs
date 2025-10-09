@@ -8,11 +8,14 @@ namespace StratzAPI.Repositories
     {
         private readonly AppDbContext _context;
         private readonly ILogger<MatchPlayerRepository> _logger;
+        private readonly PlaybackDataRepository _playbackDataRepository;
 
-        public MatchPlayerRepository(AppDbContext context, ILogger<MatchPlayerRepository> logger)
+        public MatchPlayerRepository(AppDbContext context, ILogger<MatchPlayerRepository> logger,
+                                    PlaybackDataRepository playbackDataRepository)
         {
             _context = context;
             _logger = logger;
+            _playbackDataRepository = playbackDataRepository;
         }
 
         public async Task ProcessMatchPlayerData(ICollection<MatchPlayerDto> matchPlayersDto, long matchId)
@@ -32,6 +35,7 @@ namespace StratzAPI.Repositories
                                         .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
 
                 MatchPlayerItems matchPlayerItems = MatchPlayerDtoToMatchPlayerItems(matchPlayerDto, matchPlayerDb.Id);
+
 
                 await _context.MatchPlayerItems.AddAsync(matchPlayerItems);
             }

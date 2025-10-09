@@ -1,6 +1,6 @@
 ﻿namespace StratzAPI.Models.Events
 {
-    public class AssitEvent
+    public class AssistEvent
     {
         public long Id { get; set; }
         public long MatchPlayerId { get; set; }

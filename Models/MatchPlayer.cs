@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using StratzAPI.Models.Events;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StratzAPI.Models
 {
@@ -32,5 +33,27 @@ namespace StratzAPI.Models
         public string? Award { get; set; }
 
         public MatchPlayerItems? MatchPlayerItems { get; set; }
+        public ICollection<AbilityLearnEvent> AbilityLearnEvents { get; set; }
+        public ICollection<AbilityUsedEvent> AbilityUsedEvents { get; set; }
+        public ICollection<AssistEvent> AssistEvents { get; set; }
+        public ICollection<BuyBackEvent>? BuyBackEvents { get;set; }
+        public ICollection<CsEvent> CsEvents { get; set; }
+        public ICollection<ExperienceEvent> ExperienceEvents { get; set; }
+        public ICollection<GoldEvent>? GoldEvents { get; set; }
+        public ICollection<HealEvent> HealEvents { get; set; }
+        public ICollection<HeroDamageEvent> HeroDamageEvents { get; set; }
+        public ICollection<InventoryEvent> InventoryEvents { get; set; }
+        public ICollection<KillEvent> KillEvents { get; set; }
+        public ICollection<PlayerUpdateAttributeEvent> PlayerUpdateAttributesEvents { get; set; }
+        public ICollection<PlayerUpdateBattleEvent> PlayerUpdateBattleEvents { get; set; }
+        public ICollection<PlayerUpdateGoldEvent> PlayerUpdateGoldEvents { get; set;}
+        public ICollection<PlayerUpdateHealthEvent> PlayerUpdateHealthEvents { get; set; }
+        public ICollection<PlayerUpdateLevelEvent> PlayerUpdateLevelEvents { get; set; }
+        public ICollection<PlayerUpdatePositionEvent> PlayerUpdatePositionEvents { get; set; }
+        public ICollection<PurchaseEvent> PurchaseEvents { get; set; }
+        public ICollection<RuneEvent> RunesEvents { get; set; }
+        public ICollection<StreakEvent> StreakEvents { get; set; }
+        public ICollection<TowerDamageEvent> TowerDamageEvents { get; set; }
+        public ICollection<SpiritBearInventoryEvent>? SpiritBearInventoryEvents { get; set; }
     }
 }

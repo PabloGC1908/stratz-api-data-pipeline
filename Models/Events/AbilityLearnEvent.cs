@@ -1,6 +1,6 @@
 ﻿namespace StratzAPI.Models.Events
 {
-    public class AbilityLearnEvents
+    public class AbilityLearnEvent
     {
         public long Id { get; set; }
         public long MatchPlayerId { get; set; }
