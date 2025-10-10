@@ -25,7 +25,201 @@ namespace StratzAPI.Repositories
         {
             foreach (var abilityLearnEventsDto in playbackData.AbilityLearnEvents)
             {
+                if (abilityLearnEventsDto != null)
+                {
+                    AbilityLearnEvent abilityLearnEvent = mapAbilityLearnEvent(abilityLearnEventsDto, matchPlayerId);
+                    await _context.AbilityLearnEvent.AddAsync(abilityLearnEvent);
+                }
+            }
 
+            foreach (var abilityUsedEventsDto in playbackData.AbilityUsedEvents)
+            {
+                if (abilityUsedEventsDto != null)
+                {
+                    AbilityUsedEvent abilityUsedEvent = mapAbilityUsedEvent(abilityUsedEventsDto, matchPlayerId);
+
+                    await _context.AbilityUsedEvent.AddAsync(abilityUsedEvent);
+                }
+            }
+
+            foreach (var assistEventDto in playbackData.AssistEvents)
+            {
+                if (assistEventDto != null)
+                {
+                    AssistEvent assistEvent = mapAssistEvent(assistEventDto, matchPlayerId);
+                    await _context.AssistEvent.AddAsync(assistEvent);
+                }
+            }
+
+            foreach (var buyBackEventDto in playbackData.BuyBackEvents)
+            {
+                if (buyBackEventDto != null)
+                {
+                    BuyBackEvent buyBackEvent = mapBuyBackEvent(buyBackEventDto, matchPlayerId);
+                    await _context.BuyBackEvent.AddAsync(buyBackEvent);
+                }
+            }
+
+            foreach (var csEventDto in playbackData.CsEvents)
+            {
+                if (csEventDto != null)
+                {
+                    CsEvent csEvent = mapCsEvent(csEventDto, matchPlayerId);
+                    await _context.CsEvent.AddAsync(csEvent);
+                }
+            }
+
+            foreach (var experienceEventDto in playbackData.ExperienceEvents)
+            {
+                if (experienceEventDto != null)
+                {
+                    ExperienceEvent experienceEvent = mapExperienceEvent(experienceEventDto, matchPlayerId);
+                    await _context.ExperienceEvent.AddAsync(experienceEvent);
+                }
+            }
+
+            foreach (var goldEventDto in playbackData.GoldEvents)
+            {
+                if (goldEventDto != null)
+                {
+                    GoldEvent goldEvent = mapGoldEvent(goldEventDto, matchPlayerId);
+                    await _context.GoldEvent.AddAsync(goldEvent);
+                }
+            }
+
+            foreach (var healEventDto in playbackData.HealEvents)
+            {
+                if (healEventDto != null)
+                {
+                    HealEvent healEvent = mapHealEvent(healEventDto, matchPlayerId);
+                    await _context.HealEvent.AddAsync(healEvent);
+                }
+            }
+
+            foreach (var heroDamageEventDto in playbackData.HeroDamageEvents)
+            {
+                if (heroDamageEventDto != null)
+                {
+                    HeroDamageEvent heroDamageEvent = mapHeroDamageEvent(heroDamageEventDto, matchPlayerId);
+                    await _context.HeroDamageEvent.AddAsync(heroDamageEvent);
+                }
+            }
+
+            foreach (var inventoryEventDto in playbackData.InventoryEvents)
+            {
+                if (inventoryEventDto != null)
+                {
+                    InventoryEvent inventoryEvent = mapInventoryEvent(inventoryEventDto, matchPlayerId);
+                    await _context.InventoryEvent.AddAsync(inventoryEvent);
+                }
+            }
+
+            foreach (var killEventDto in playbackData.KillEvents)
+            {
+                if (killEventDto != null)
+                {
+                    KillEvent killEvent = mapKillEvent(killEventDto, matchPlayerId);
+                    await _context.KillEvent.AddAsync(killEvent);
+                }
+            }
+
+            foreach (var playerUpdateAttributeEventDto in playbackData.PlayerUpdateAttributeEvents)
+            {
+                if (playerUpdateAttributeEventDto != null)
+                {
+                    PlayerUpdateAttributeEvent playerUpdateAttributeEvent = mapPlayerUpdateAttributeEvent(playerUpdateAttributeEventDto, matchPlayerId);
+                    await _context.PlayerUpdateAttributeEvent.AddAsync(playerUpdateAttributeEvent);
+                }
+            }
+
+            foreach (var playerUpdateBattleEventDto in playbackData.PlayerUpdateBattleEvents)
+            {
+                if (playerUpdateBattleEventDto != null)
+                {
+                    PlayerUpdateBattleEvent playerUpdateBattleEvent = mapPlayerUpdateBattleEvent(playerUpdateBattleEventDto, matchPlayerId);
+                    await _context.PlayerUpdateBattleEvent.AddAsync(playerUpdateBattleEvent);
+                }
+            }
+
+            foreach (var playerUpdateGoldEventDto in playbackData.PlayerUpdateGoldEvents)
+            {
+                if (playerUpdateGoldEventDto != null)
+                {
+                    PlayerUpdateGoldEvent playerUpdateGoldEvent = mapPlayerUpdateGoldEvent(playerUpdateGoldEventDto, matchPlayerId);
+                    await _context.PlayerUpdateGoldEvent.AddAsync(playerUpdateGoldEvent);
+                }
+            }
+
+            foreach (var playerUpdateHealthEventDto in playbackData.PlayerUpdateHealthEvents)
+            {
+                if (playerUpdateHealthEventDto != null)
+                {
+                    PlayerUpdateHealthEvent playerUpdateHealthEvent = mapPlayerUpdateHealthEvent(playerUpdateHealthEventDto, matchPlayerId);
+                    await _context.PlayerUpdateHealthEvent.AddAsync(playerUpdateHealthEvent);
+                }
+            }
+
+            foreach (var playerUpdateLevelEventDto in playbackData.PlayerUpdateLevelEvents)
+            {
+                if (playerUpdateLevelEventDto != null)
+                {
+                    PlayerUpdateLevelEvent playerUpdateLevelEvent = mapPlayerUpdateLevelEvent(playerUpdateLevelEventDto, matchPlayerId);
+                    await _context.PlayerUpdateLevelEvent.AddAsync(playerUpdateLevelEvent);
+                }
+            }
+
+            foreach (var playerUpdatePositionEventDto in playbackData.PlayerUpdatePositionEvents)
+            {
+                if (playerUpdatePositionEventDto != null)
+                {
+                    PlayerUpdatePositionEvent playerUpdatePositionEvent = mapPlayerUpdatePositionEvent(playerUpdatePositionEventDto, matchPlayerId);
+                    await _context.PlayerUpdatePositionEvent.AddAsync(playerUpdatePositionEvent);
+                }
+            }
+
+            foreach (var purchaseEventDto in playbackData.PurchaseEvents)
+            {
+                if (purchaseEventDto != null)
+                {
+                    PurchaseEvent purchaseEvent = mapPurchaseEvent(purchaseEventDto, matchPlayerId);
+                    await _context.PurchaseEvent.AddAsync(purchaseEvent);
+                }
+            }
+
+            foreach (var runeEventDto in playbackData.RuneEvents)
+            {
+                if (runeEventDto != null)
+                {
+                    RuneEvent runeEvent = mapRuneEvent(runeEventDto, matchPlayerId);
+                    await _context.RuneEvent.AddAsync(runeEvent);
+                }
+            }
+
+            foreach (var spiritBearInventoryEventDto in playbackData.SpiritBearInventoryEvents)
+            {
+                if (spiritBearInventoryEventDto != null)
+                {
+                    SpiritBearInventoryEvent spiritBearInventoryEvent = mapSpiritBearInventoryEvent(spiritBearInventoryEventDto, matchPlayerId);
+                    await _context.SpiritBearInventoryEvent.AddAsync(spiritBearInventoryEvent);
+                }
+            }
+
+            foreach (var streakEventDto in playbackData.StreakEvents)
+            {
+                if (streakEventDto != null)
+                {
+                    StreakEvent streakEvent = mapStreakEvent(streakEventDto, matchPlayerId);
+                    await _context.StreakEvent.AddAsync(streakEvent);
+                }
+            }
+
+            foreach (var towerDamageEventDto in playbackData.TowerDamageEvents)
+            {
+                if (towerDamageEventDto != null)
+                {
+                    TowerDamageEvent towerDamageEvent = mapTowerDamageEvent(towerDamageEventDto, matchPlayerId);
+                    await _context.TowerDamageEvent.AddAsync(towerDamageEvent);
+                }
             }
         }
 
@@ -199,7 +393,6 @@ namespace StratzAPI.Repositories
             };
         }
 
-        // TODO - el campo assist es una lista
         public KillEvent mapKillEvent(KillEventDto killEventDto, long matchPlayerId)
         {
             return new KillEvent
@@ -326,13 +519,24 @@ namespace StratzAPI.Repositories
             };
         }
 
-        // TODO - Mapear los atributos
         public SpiritBearInventoryEvent mapSpiritBearInventoryEvent(
                             SpiritBearInventoryEventDto spiritBearInventoryEventDto, long matchPlayerId)
         {
             return new SpiritBearInventoryEvent
             {
                 MatchPlayerId = matchPlayerId,
+                Time = spiritBearInventoryEventDto.Time,
+                Item0 = spiritBearInventoryEventDto.Item0.ItemId,
+                Item1 = spiritBearInventoryEventDto.Item1.ItemId,
+                Item2 = spiritBearInventoryEventDto.Item2.ItemId,
+                Item3 = spiritBearInventoryEventDto.Item3.ItemId,
+                Item4 = spiritBearInventoryEventDto.Item4.ItemId,
+                Item5 = spiritBearInventoryEventDto.Item5.ItemId,
+                BackPack0 = spiritBearInventoryEventDto.BackPack0.ItemId,
+                BackPack1 = spiritBearInventoryEventDto.BackPack1.ItemId,
+                BackPack2 = spiritBearInventoryEventDto.BackPack2.ItemId,
+                Neutral0 = spiritBearInventoryEventDto.Neutral0.ItemId,
+                Teleport0 = spiritBearInventoryEventDto.Neutral0.ItemId
             };
         }
 

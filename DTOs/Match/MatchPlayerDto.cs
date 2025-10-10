@@ -36,5 +36,6 @@
         public short? Backpack1Id { get; set; }
         public short? Backpack2Id { get; set; }
         public short? Neutral0Id { get; set; }
+        public PlaybackDataDto PlayBackData { get; internal set; }
     }
 }

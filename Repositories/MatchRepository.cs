@@ -181,7 +181,6 @@ public class MatchRepository
                           xp
                           positionX
                           positionY
-                          assist
                           isSolo
                           isGank
                           isInvisible
