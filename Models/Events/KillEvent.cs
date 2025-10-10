@@ -15,7 +15,6 @@
         public int? Xp { get; set; }
         public int? PositionX { get; set; }
         public int? PositionY { get; set; }
-        public List<int>? Assist { get; set; }
         public bool? IsSolo { get; set; }
         public bool? IsGank { get; set; }
         public bool? IsInvisible { get; set; }

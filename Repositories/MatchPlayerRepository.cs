@@ -35,6 +35,7 @@ namespace StratzAPI.Repositories
                                         .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
 
                 MatchPlayerItems matchPlayerItems = MatchPlayerDtoToMatchPlayerItems(matchPlayerDto, matchPlayerDb.Id);
+                _playbackDataRepository.ProcessPlaybackMatchPlayerData(matchPlayerDto.)
 
 
                 await _context.MatchPlayerItems.AddAsync(matchPlayerItems);
