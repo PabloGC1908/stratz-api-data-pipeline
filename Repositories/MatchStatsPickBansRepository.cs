@@ -16,13 +16,20 @@ public class MatchStatsPickBansRepository
         _logger = logger;
     }
 
-    public async Task ProcessMatchPickBan(ICollection<MatchPickBansDto> pickBansDto, long matchdId)
+    public async Task ProcessMatchPickBan(ICollection<MatchPickBansDto> pickBansDto, long matchId)
     {
+        if (pickBansDto == null || pickBansDto.Count == 0)
+        {
+            _logger.LogWarning("No hay picks o bans para el match {matchId}", matchId);
+            return;
+        }
+
         foreach (var pickBan in pickBansDto)
         {
-            MatchPickBans matchPickBans = Map(pickBan, matchdId);
+            MatchPickBans matchPickBans = Map(pickBan, matchId);
 
             await _context.MatchPickBans.AddAsync(matchPickBans);
+            await _context.SaveChangesAsync();
         }
     }
 

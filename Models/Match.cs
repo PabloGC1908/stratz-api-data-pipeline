@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StratzAPI.Models
 {
     public class Match
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public long Id { get; set; }
         public bool DidRadiantWin { get; set; }
         public int DurationSeconds { get; set; }

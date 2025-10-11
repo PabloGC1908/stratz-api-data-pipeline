@@ -34,6 +34,8 @@ namespace StratzAPI.Repositories
                                         .Where(mP => mP.MatchId == matchId && mP.PlayerId == matchPlayerDto.SteamAccountId)
                                         .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
 
+                _logger.LogInformation("Se encontro el MatchPlayerId, ingresaando los items");
+
                 MatchPlayerItems matchPlayerItems = MatchPlayerDtoToMatchPlayerItems(matchPlayerDto, matchPlayerDb.Id);
                 await _playbackDataRepository.ProcessPlaybackMatchPlayerData(matchPlayerDto.PlayBackData, matchId);
 

@@ -422,20 +422,27 @@ public class MatchRepository
 
     public async Task ProcessMatchData(MatchDto matchDto)
     {
-        Match match = Map(matchDto);
-
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        
         try
         {
+            Match match = Map(matchDto);
             _logger.LogInformation("Ingresando data de la partida a la base de datos");
             await _context.Match.AddAsync(match);
+            await _context.SaveChangesAsync();
             _logger.LogInformation("Ingreso correcto");
+
+
             _logger.LogInformation("Ingresando data de los picks y bans a la base de datos");
             await _matchStatsPickBansRepository.ProcessMatchPickBan(matchDto.PickBans, match.Id);
             _logger.LogInformation("Ingreso Correcto");
+            
+            
             _logger.LogInformation("Ingresando data de los jugadores a la base de datos");
             await _matchPlayerRepository.ProcessMatchPlayerData(matchDto.Players, match.Id);
             _logger.LogInformation("Ingreso correcto");
 
+            
             _logger.LogInformation("WinRates Count: {count}", matchDto.WinRates.Count);
             _logger.LogInformation("PredictedWinRates Count: {count}", matchDto.PredictedWinRates.Count);
             _logger.LogInformation("RadiantKills Count: {count}", matchDto.RadiantKills.Count);
@@ -476,10 +483,16 @@ public class MatchRepository
             }
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Guardado de la partida correctamente");
         }
         catch (Exception ex)
         {
-            throw new Exception("Error en alguna parte del ingreso de datos de la partida");
+            _logger.LogError(ex, "Error al procesar datos del match {matchId}", matchDto.Id);
+            _logger.LogError("Haciendo rollback");
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
