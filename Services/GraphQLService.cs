@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using StratzAPI.DTOs.Match;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -21,7 +22,6 @@ namespace StratzAPI.Services
                 BaseAddress = new Uri("https://api.stratz.com/graphql")
             };
 
-            // 🔑 Token STRATZ (usa variable de entorno en producción)
             var STRATZ_API_KEY = Environment.GetEnvironmentVariable("STRATZ_API_KEY")
                 ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiMDRhNjdhMDMtODNkZi00OGE3LWEzM2MtYjAzZjYxMWFhZDllIiwiU3RlYW1JZCI6IjIwNDYxNzQ2MiIsIkFQSVVzZXIiOiJ0cnVlIiwibmJmIjoxNzYwMTM1NjQxLCJleHAiOjE3OTE2NzE2NDEsImlhdCI6MTc2MDEzNTY0MSwiaXNzIjoiaHR0cHM6Ly9hcGkuc3RyYXR6LmNvbSJ9.BKM3-PVkahqDzuOnlzpccv_O1IozBkQ-MJWMQJNJjj8";
 
@@ -39,7 +39,7 @@ namespace StratzAPI.Services
             }
         }
 
-        public async Task<T?> SendGraphQLQueryAsync<T>(string query, object variables = null)
+        public async Task<T?> SendGraphQLQueryAsync<T>(string query, object? variables = null)
         {
             var payload = new
             {
@@ -64,8 +64,6 @@ namespace StratzAPI.Services
                 }
 
                 var responseString = await response.Content.ReadAsStringAsync();
-
-                // STRATZ devuelve JSON con propiedad "data"
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseString);
 
                 if (jsonResponse.TryGetProperty("errors", out var errors))
@@ -74,8 +72,28 @@ namespace StratzAPI.Services
                     return default;
                 }
 
+                try
+                {
+                    using var doc = JsonDocument.Parse(responseString);
+                    string formatted = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
+                    _logger.LogInformation("Resultado GraphQL:\n{formatted}", formatted);
+                }
+                catch
+                {
+                    _logger.LogWarning("No se pudo formatear la respuesta GraphQL, contenido crudo: {resultJson}", jsonResponse);
+                }
+
                 _logger.LogInformation("Consulta ejecutada correctamente.");
-                var data = jsonResponse.GetProperty("data").Deserialize<T>();
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var data = jsonResponse.GetProperty("data").Deserialize<T>(options);
+
+                _logger.LogInformation("Se extrajo la partida correctamente correctamente:\n{data}",
+                        JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
 
                 return data;
             }

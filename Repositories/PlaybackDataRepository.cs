@@ -1,7 +1,9 @@
 ﻿using Azure.Core;
+using Microsoft.EntityFrameworkCore;
 using StratzAPI.Data;
 using StratzAPI.DTOs.Match;
 using StratzAPI.DTOs.Match.Events;
+using StratzAPI.Models;
 using StratzAPI.Models.Events;
 using StratzAPI.Services;
 
@@ -23,203 +25,84 @@ namespace StratzAPI.Repositories
 
         public async Task ProcessPlaybackMatchPlayerData(PlaybackDataDto playbackData, long matchPlayerId)
         {
-            foreach (var abilityLearnEventsDto in playbackData.AbilityLearnEvents)
+            if (playbackData == null)
             {
-                if (abilityLearnEventsDto != null)
+                _logger.LogWarning("PlaybackData es nulo, se omite procesamiento");
+                return;
+            }
+
+            await AddEvents(playbackData.AbilityLearnEvents, mapAbilityLearnEvent, _context.AbilityLearnEvent, matchPlayerId);
+            await AddEvents(playbackData.AbilityUsedEvents, mapAbilityUsedEvent, _context.AbilityUsedEvent, matchPlayerId);
+            await AddEvents(playbackData.AssistEvents, mapAssistEvent, _context.AssistEvent, matchPlayerId);
+            await AddEvents(playbackData.BuyBackEvents, mapBuyBackEvent, _context.BuyBackEvent, matchPlayerId);
+            await AddEvents(playbackData.CsEvents, mapCsEvent, _context.CsEvent, matchPlayerId);
+            await AddEvents(playbackData.ExperienceEvents, mapExperienceEvent, _context.ExperienceEvent, matchPlayerId);
+            await AddEvents(playbackData.GoldEvents, mapGoldEvent, _context.GoldEvent, matchPlayerId);
+            await AddEvents(playbackData.HealEvents, mapHealEvent, _context.HealEvent, matchPlayerId);
+            await AddEvents(playbackData.HeroDamageEvents, mapHeroDamageEvent, _context.HeroDamageEvent, matchPlayerId);
+
+
+            if (playbackData.InventoryEvents == null)
+            {
+                _logger.LogWarning("InventoryEvents llega como nulo, omitiendo procesamiento");
+                return;
+            } else
+            {
+                foreach (var inventoryEventDto in playbackData.InventoryEvents)
                 {
-                    AbilityLearnEvent abilityLearnEvent = mapAbilityLearnEvent(abilityLearnEventsDto, matchPlayerId);
-                    await _context.AbilityLearnEvent.AddAsync(abilityLearnEvent);
+                    if (inventoryEventDto != null)
+                    {
+                        InventoryEvent inventoryEvent = mapInventoryEvent(inventoryEventDto, matchPlayerId);
+                        await _context.InventoryEvent.AddAsync(inventoryEvent);
+                    }
                 }
             }
 
-            foreach (var abilityUsedEventsDto in playbackData.AbilityUsedEvents)
-            {
-                if (abilityUsedEventsDto != null)
-                {
-                    AbilityUsedEvent abilityUsedEvent = mapAbilityUsedEvent(abilityUsedEventsDto, matchPlayerId);
 
-                    await _context.AbilityUsedEvent.AddAsync(abilityUsedEvent);
+            await AddEvents(playbackData.KillEvents, mapKillEvent, _context.KillEvent, matchPlayerId);
+            await AddEvents(playbackData.PlayerUpdateAttributeEvents, mapPlayerUpdateAttributeEvent, _context.PlayerUpdateAttributeEvent, matchPlayerId);
+            await AddEvents(playbackData.PlayerUpdateBattleEvents, mapPlayerUpdateBattleEvent, _context.PlayerUpdateBattleEvent, matchPlayerId);
+            await AddEvents(playbackData.PlayerUpdateGoldEvents, mapPlayerUpdateGoldEvent, _context.PlayerUpdateGoldEvent, matchPlayerId);
+            await AddEvents(playbackData.PlayerUpdateHealthEvents, mapPlayerUpdateHealthEvent, _context.PlayerUpdateHealthEvent, matchPlayerId);
+            await AddEvents(playbackData.PlayerUpdateLevelEvents, mapPlayerUpdateLevelEvent, _context.PlayerUpdateLevelEvent, matchPlayerId);
+            await AddEvents(playbackData.PlayerUpdatePositionEvents, mapPlayerUpdatePositionEvent, _context.PlayerUpdatePositionEvent, matchPlayerId);
+            await AddEvents(playbackData.PurchaseEvents, mapPurchaseEvent, _context.PurchaseEvent, matchPlayerId);
+            await AddEvents(playbackData.RuneEvents, mapRuneEvent, _context.RuneEvent, matchPlayerId);
+
+            if (playbackData.SpiritBearInventoryEvents == null)
+            {
+                _logger.LogWarning("SpiritBearInventoryEvents llega como nulo, omitiendo procesamiento");
+                return;
+            }
+            else
+            {
+                foreach (var spiritBearInventoryEventDto in playbackData.SpiritBearInventoryEvents)
+                {
+                    if (spiritBearInventoryEventDto != null)
+                    {
+                        SpiritBearInventoryEvent spiritBearInventoryEvent = mapSpiritBearInventoryEvent(spiritBearInventoryEventDto, matchPlayerId);
+                        await _context.SpiritBearInventoryEvent.AddAsync(spiritBearInventoryEvent);
+                    }
                 }
             }
 
-            foreach (var assistEventDto in playbackData.AssistEvents)
-            {
-                if (assistEventDto != null)
-                {
-                    AssistEvent assistEvent = mapAssistEvent(assistEventDto, matchPlayerId);
-                    await _context.AssistEvent.AddAsync(assistEvent);
-                }
-            }
+            await AddEvents(playbackData.StreakEvents, mapStreakEvent, _context.StreakEvent, matchPlayerId);
+            await AddEvents(playbackData.TowerDamageEvents, mapTowerDamageEvent, _context.TowerDamageEvent, matchPlayerId);
+        }
 
-            foreach (var buyBackEventDto in playbackData.BuyBackEvents)
-            {
-                if (buyBackEventDto != null)
-                {
-                    BuyBackEvent buyBackEvent = mapBuyBackEvent(buyBackEventDto, matchPlayerId);
-                    await _context.BuyBackEvent.AddAsync(buyBackEvent);
-                }
-            }
+        private async Task AddEvents<TDto, TEntity>(IEnumerable<TDto>? dtos, Func<TDto, long, TEntity> mapFunc,
+                                             DbSet<TEntity> dbSet, long matchPlayerId)
+            where TDto : class
+            where TEntity : class
+        {
+            if (dtos == null || !dtos.Any())
+                return;
 
-            foreach (var csEventDto in playbackData.CsEvents)
+            foreach (var dto in dtos)
             {
-                if (csEventDto != null)
-                {
-                    CsEvent csEvent = mapCsEvent(csEventDto, matchPlayerId);
-                    await _context.CsEvent.AddAsync(csEvent);
-                }
-            }
-
-            foreach (var experienceEventDto in playbackData.ExperienceEvents)
-            {
-                if (experienceEventDto != null)
-                {
-                    ExperienceEvent experienceEvent = mapExperienceEvent(experienceEventDto, matchPlayerId);
-                    await _context.ExperienceEvent.AddAsync(experienceEvent);
-                }
-            }
-
-            foreach (var goldEventDto in playbackData.GoldEvents)
-            {
-                if (goldEventDto != null)
-                {
-                    GoldEvent goldEvent = mapGoldEvent(goldEventDto, matchPlayerId);
-                    await _context.GoldEvent.AddAsync(goldEvent);
-                }
-            }
-
-            foreach (var healEventDto in playbackData.HealEvents)
-            {
-                if (healEventDto != null)
-                {
-                    HealEvent healEvent = mapHealEvent(healEventDto, matchPlayerId);
-                    await _context.HealEvent.AddAsync(healEvent);
-                }
-            }
-
-            foreach (var heroDamageEventDto in playbackData.HeroDamageEvents)
-            {
-                if (heroDamageEventDto != null)
-                {
-                    HeroDamageEvent heroDamageEvent = mapHeroDamageEvent(heroDamageEventDto, matchPlayerId);
-                    await _context.HeroDamageEvent.AddAsync(heroDamageEvent);
-                }
-            }
-
-            foreach (var inventoryEventDto in playbackData.InventoryEvents)
-            {
-                if (inventoryEventDto != null)
-                {
-                    InventoryEvent inventoryEvent = mapInventoryEvent(inventoryEventDto, matchPlayerId);
-                    await _context.InventoryEvent.AddAsync(inventoryEvent);
-                }
-            }
-
-            foreach (var killEventDto in playbackData.KillEvents)
-            {
-                if (killEventDto != null)
-                {
-                    KillEvent killEvent = mapKillEvent(killEventDto, matchPlayerId);
-                    await _context.KillEvent.AddAsync(killEvent);
-                }
-            }
-
-            foreach (var playerUpdateAttributeEventDto in playbackData.PlayerUpdateAttributeEvents)
-            {
-                if (playerUpdateAttributeEventDto != null)
-                {
-                    PlayerUpdateAttributeEvent playerUpdateAttributeEvent = mapPlayerUpdateAttributeEvent(playerUpdateAttributeEventDto, matchPlayerId);
-                    await _context.PlayerUpdateAttributeEvent.AddAsync(playerUpdateAttributeEvent);
-                }
-            }
-
-            foreach (var playerUpdateBattleEventDto in playbackData.PlayerUpdateBattleEvents)
-            {
-                if (playerUpdateBattleEventDto != null)
-                {
-                    PlayerUpdateBattleEvent playerUpdateBattleEvent = mapPlayerUpdateBattleEvent(playerUpdateBattleEventDto, matchPlayerId);
-                    await _context.PlayerUpdateBattleEvent.AddAsync(playerUpdateBattleEvent);
-                }
-            }
-
-            foreach (var playerUpdateGoldEventDto in playbackData.PlayerUpdateGoldEvents)
-            {
-                if (playerUpdateGoldEventDto != null)
-                {
-                    PlayerUpdateGoldEvent playerUpdateGoldEvent = mapPlayerUpdateGoldEvent(playerUpdateGoldEventDto, matchPlayerId);
-                    await _context.PlayerUpdateGoldEvent.AddAsync(playerUpdateGoldEvent);
-                }
-            }
-
-            foreach (var playerUpdateHealthEventDto in playbackData.PlayerUpdateHealthEvents)
-            {
-                if (playerUpdateHealthEventDto != null)
-                {
-                    PlayerUpdateHealthEvent playerUpdateHealthEvent = mapPlayerUpdateHealthEvent(playerUpdateHealthEventDto, matchPlayerId);
-                    await _context.PlayerUpdateHealthEvent.AddAsync(playerUpdateHealthEvent);
-                }
-            }
-
-            foreach (var playerUpdateLevelEventDto in playbackData.PlayerUpdateLevelEvents)
-            {
-                if (playerUpdateLevelEventDto != null)
-                {
-                    PlayerUpdateLevelEvent playerUpdateLevelEvent = mapPlayerUpdateLevelEvent(playerUpdateLevelEventDto, matchPlayerId);
-                    await _context.PlayerUpdateLevelEvent.AddAsync(playerUpdateLevelEvent);
-                }
-            }
-
-            foreach (var playerUpdatePositionEventDto in playbackData.PlayerUpdatePositionEvents)
-            {
-                if (playerUpdatePositionEventDto != null)
-                {
-                    PlayerUpdatePositionEvent playerUpdatePositionEvent = mapPlayerUpdatePositionEvent(playerUpdatePositionEventDto, matchPlayerId);
-                    await _context.PlayerUpdatePositionEvent.AddAsync(playerUpdatePositionEvent);
-                }
-            }
-
-            foreach (var purchaseEventDto in playbackData.PurchaseEvents)
-            {
-                if (purchaseEventDto != null)
-                {
-                    PurchaseEvent purchaseEvent = mapPurchaseEvent(purchaseEventDto, matchPlayerId);
-                    await _context.PurchaseEvent.AddAsync(purchaseEvent);
-                }
-            }
-
-            foreach (var runeEventDto in playbackData.RuneEvents)
-            {
-                if (runeEventDto != null)
-                {
-                    RuneEvent runeEvent = mapRuneEvent(runeEventDto, matchPlayerId);
-                    await _context.RuneEvent.AddAsync(runeEvent);
-                }
-            }
-
-            foreach (var spiritBearInventoryEventDto in playbackData.SpiritBearInventoryEvents)
-            {
-                if (spiritBearInventoryEventDto != null)
-                {
-                    SpiritBearInventoryEvent spiritBearInventoryEvent = mapSpiritBearInventoryEvent(spiritBearInventoryEventDto, matchPlayerId);
-                    await _context.SpiritBearInventoryEvent.AddAsync(spiritBearInventoryEvent);
-                }
-            }
-
-            foreach (var streakEventDto in playbackData.StreakEvents)
-            {
-                if (streakEventDto != null)
-                {
-                    StreakEvent streakEvent = mapStreakEvent(streakEventDto, matchPlayerId);
-                    await _context.StreakEvent.AddAsync(streakEvent);
-                }
-            }
-
-            foreach (var towerDamageEventDto in playbackData.TowerDamageEvents)
-            {
-                if (towerDamageEventDto != null)
-                {
-                    TowerDamageEvent towerDamageEvent = mapTowerDamageEvent(towerDamageEventDto, matchPlayerId);
-                    await _context.TowerDamageEvent.AddAsync(towerDamageEvent);
-                }
+                if (dto == null) continue;
+                var entity = mapFunc(dto, matchPlayerId);
+                await dbSet.AddAsync(entity);
             }
         }
 
@@ -362,34 +245,38 @@ namespace StratzAPI.Repositories
             };
         }
 
-        public InventoryEvent mapInventoryEvent(InventoryEventDto inventoryEventDto, long matchPlayerId)
+        public InventoryEvent mapInventoryEvent(InventoryEventDto dto, long matchPlayerId)
         {
             return new InventoryEvent
             {
                 MatchPlayerId = matchPlayerId,
-                Time = inventoryEventDto.Time,
-                Item0 = inventoryEventDto.Item0.ItemId,
-                Item0Charges = inventoryEventDto.Item0.Charges,
-                Item1 = inventoryEventDto.Item1.ItemId,
-                Item1Charges = inventoryEventDto.Item1.Charges,
-                Item2 = inventoryEventDto.Item2.ItemId,
-                Item2Charges = inventoryEventDto.Item2.Charges,
-                Item3 = inventoryEventDto.Item3.ItemId,
-                Item3Charges = inventoryEventDto.Item3.Charges,
-                Item4 = inventoryEventDto.Item4.ItemId,
-                Item4Charges = inventoryEventDto.Item4.Charges,
-                Item5 = inventoryEventDto.Item5.ItemId,
-                Item5Charges = inventoryEventDto.Item5.Charges,
-                BackPack0 = inventoryEventDto.BackPack0.ItemId,
-                BackPack0Charges = inventoryEventDto.BackPack0.Charges,
-                BackPack1 = inventoryEventDto.BackPack1.ItemId,
-                BackPack1Charges = inventoryEventDto.BackPack1.Charges,
-                BackPack2 = inventoryEventDto.BackPack2.ItemId,
-                BackPack2Charges = inventoryEventDto.BackPack2.Charges,
-                Teleport0 = inventoryEventDto.Teleport0.ItemId,
-                Teleport0Charges = inventoryEventDto.Teleport0.Charges,
-                Neutral0 = inventoryEventDto.Neutral0.ItemId,
-                Neutral0Charges = inventoryEventDto.Neutral0.Charges
+                Time = dto.Time,
+
+                Item0 = dto.Item0?.ItemId,
+                Item0Charges = dto.Item0?.Charges,
+                Item1 = dto.Item1?.ItemId,
+                Item1Charges = dto.Item1?.Charges,
+                Item2 = dto.Item2?.ItemId,
+                Item2Charges = dto.Item2?.Charges,
+                Item3 = dto.Item3?.ItemId,
+                Item3Charges = dto.Item3?.Charges,
+                Item4 = dto.Item4?.ItemId,
+                Item4Charges = dto.Item4?.Charges,
+                Item5 = dto.Item5?.ItemId,
+                Item5Charges = dto.Item5?.Charges,
+
+                BackPack0 = dto.BackPack0?.ItemId,
+                BackPack0Charges = dto.BackPack0?.Charges,
+                BackPack1 = dto.BackPack1?.ItemId,
+                BackPack1Charges = dto.BackPack1?.Charges,
+                BackPack2 = dto.BackPack2?.ItemId,
+                BackPack2Charges = dto.BackPack2?.Charges,
+
+                Teleport0 = dto.Teleport0?.ItemId,
+                Teleport0Charges = dto.Teleport0?.Charges,
+
+                Neutral0 = dto.Neutral0?.ItemId,
+                Neutral0Charges = dto.Neutral0?.Charges
             };
         }
 
@@ -526,17 +413,17 @@ namespace StratzAPI.Repositories
             {
                 MatchPlayerId = matchPlayerId,
                 Time = spiritBearInventoryEventDto.Time,
-                Item0 = spiritBearInventoryEventDto.Item0.ItemId,
-                Item1 = spiritBearInventoryEventDto.Item1.ItemId,
-                Item2 = spiritBearInventoryEventDto.Item2.ItemId,
-                Item3 = spiritBearInventoryEventDto.Item3.ItemId,
-                Item4 = spiritBearInventoryEventDto.Item4.ItemId,
-                Item5 = spiritBearInventoryEventDto.Item5.ItemId,
-                BackPack0 = spiritBearInventoryEventDto.BackPack0.ItemId,
-                BackPack1 = spiritBearInventoryEventDto.BackPack1.ItemId,
-                BackPack2 = spiritBearInventoryEventDto.BackPack2.ItemId,
-                Neutral0 = spiritBearInventoryEventDto.Neutral0.ItemId,
-                Teleport0 = spiritBearInventoryEventDto.Neutral0.ItemId
+                Item0 = spiritBearInventoryEventDto?.Item0?.ItemId,
+                Item1 = spiritBearInventoryEventDto?.Item1?.ItemId,
+                Item2 = spiritBearInventoryEventDto?.Item2?.ItemId,
+                Item3 = spiritBearInventoryEventDto?.Item3?.ItemId,
+                Item4 = spiritBearInventoryEventDto?.Item4?.ItemId,
+                Item5 = spiritBearInventoryEventDto?.Item5?.ItemId,
+                BackPack0 = spiritBearInventoryEventDto?.BackPack0?.ItemId,
+                BackPack1 = spiritBearInventoryEventDto?.BackPack1?.ItemId,
+                BackPack2 = spiritBearInventoryEventDto?.BackPack2?.ItemId,
+                Neutral0 = spiritBearInventoryEventDto?.Neutral0?.ItemId,
+                Teleport0 = spiritBearInventoryEventDto?.Neutral0?.ItemId
             };
         }
 

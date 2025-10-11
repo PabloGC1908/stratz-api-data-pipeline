@@ -2,6 +2,7 @@
 using StratzAPI.DTOs.Match;
 using StratzAPI.Models;
 using StratzAPI.Services;
+using System.Text.Json;
 
 namespace StratzAPI.Repositories;
 
@@ -415,7 +416,8 @@ public class MatchRepository
             throw new Exception("No se extrajo la data correctamente");
         }
 
-        _logger.LogInformation("Se extrajo la partida correctamente correctamente");
+        _logger.LogInformation("Se extrajo la partida correctamente correctamente:\n{matchResponseType}",
+                                JsonSerializer.Serialize(matchResponseType, new JsonSerializerOptions { WriteIndented = true }));
 
         return matchResponseType.match;
     }
@@ -428,18 +430,24 @@ public class MatchRepository
         {
             Match match = Map(matchDto);
             _logger.LogInformation("Ingresando data de la partida a la base de datos");
+            _logger.LogInformation("Match completo:\n{match}", 
+                            JsonSerializer.Serialize(match, new JsonSerializerOptions { WriteIndented = true }));
             await _context.Match.AddAsync(match);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Ingreso correcto");
 
+            Match? matchDb = _context.Match
+                        .Where(mP => mP.Id == matchDto.Id)
+                        .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
+
 
             _logger.LogInformation("Ingresando data de los picks y bans a la base de datos");
-            await _matchStatsPickBansRepository.ProcessMatchPickBan(matchDto.PickBans, match.Id);
+            await _matchStatsPickBansRepository.ProcessMatchPickBan(matchDto.PickBans, matchDb.Id);
             _logger.LogInformation("Ingreso Correcto");
             
             
             _logger.LogInformation("Ingresando data de los jugadores a la base de datos");
-            await _matchPlayerRepository.ProcessMatchPlayerData(matchDto.Players, match.Id);
+            await _matchPlayerRepository.ProcessMatchPlayerData(matchDto.Players, matchDb.Id);
             _logger.LogInformation("Ingreso correcto");
 
             
@@ -468,7 +476,7 @@ public class MatchRepository
             for (int i = 0; i < maxCount; i++)
             {
                 MatchStats matchStats = MapMatchStats(
-                    matchId: match.Id,
+                    matchId: matchDb.Id,
                     min: i,
                     winRate: i < matchDto.WinRates.Count ? matchDto.WinRates.ElementAt(i) : (decimal?)null,
                     predictedWinRate: i < matchDto.PredictedWinRates.Count ? matchDto.PredictedWinRates.ElementAt(i) : (decimal?)null,
@@ -479,7 +487,7 @@ public class MatchRepository
                 );
 
                 await _context.MatchStats.AddAsync(matchStats);
-                _logger.LogInformation("Guardado matchStats con ID {matchId} y minuto {min}", match.Id, i);
+                _logger.LogInformation("Guardado matchStats con ID {matchId} y minuto {min}", matchDb.Id, i);
             }
 
             await _context.SaveChangesAsync();
