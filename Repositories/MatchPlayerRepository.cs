@@ -28,7 +28,9 @@ namespace StratzAPI.Repositories
 
             foreach (var matchPlayerDto in matchPlayersDto)
             {
-                bool playerExist = await _context.Player.AnyAsync(player => player.Id == matchPlayerDto.SteamAccountId);
+                bool playerExist = await _context.Player
+                                .AsNoTracking()
+                                .AnyAsync(player => player.Id == matchPlayerDto.SteamAccountId);
 
                 if (!playerExist)
                 {
@@ -46,6 +48,7 @@ namespace StratzAPI.Repositories
             foreach (var matchPlayerDto in matchPlayersDto)
             {
                 MatchPlayer? matchPlayerDb = _context.MatchPlayer
+                                .AsNoTracking()
                                 .Where(mP => mP.MatchId == matchId && mP.PlayerId == matchPlayerDto.SteamAccountId)
                                 .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
 

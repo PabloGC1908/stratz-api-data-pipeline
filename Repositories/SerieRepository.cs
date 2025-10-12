@@ -13,16 +13,70 @@ public class SerieRepository
     private readonly GraphQLService _graphQLService;
     private readonly MatchRepository _matchRepository;
     private readonly ILogger<SerieRepository> _logger;
+    private readonly IServiceProvider _serviceProvider;
     private readonly AppDbContext _context;
 
-    public SerieRepository(GraphQLService graphQLService, MatchRepository matchRepository, 
-                            ILogger<SerieRepository> logger, AppDbContext context)
+    public SerieRepository(GraphQLService graphQLService, MatchRepository matchRepository,
+                            ILogger<SerieRepository> logger, AppDbContext context,
+                            IServiceProvider serviceProvider)
     {
         _graphQLService = graphQLService;
         _matchRepository = matchRepository;
         _logger = logger;
         _context = context;
+        _serviceProvider = serviceProvider;
     }
+
+    public async Task GetOrFetchLeagueSeriesParallel(int leagueId)
+    {
+        League? league = await _context.League.FindAsync(leagueId);
+        if (league == null)
+        {
+            _logger.LogWarning("No se encontro el id de la liga en la base de datos.");
+        }
+
+        var leagueSeriesDto = await GetLeagueSeries(leagueId);
+        if (leagueSeriesDto?.Series == null || !leagueSeriesDto.Series.Any())
+        {
+            _logger.LogWarning("No se encontraron series para la liga {leagueId}.", leagueId);
+            return;
+        }
+
+        var matches = leagueSeriesDto.Series.SelectMany(s => s.Matches).ToList();
+        var semaphore = new SemaphoreSlim(5); // máximo 5 tareas concurrentes
+
+        var tasks = matches.Select(async match =>
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                await ProcessMatchParallel(match.Id);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task ProcessMatchParallel(long matchId)
+    {
+        using var scope = _serviceProvider.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var loggerMatch = scope.ServiceProvider.GetRequiredService<ILogger<MatchRepository>>();
+        var matchStatsRepo = scope.ServiceProvider.GetRequiredService<MatchStatsPickBansRepository>();
+        var matchPlayerRepo = scope.ServiceProvider.GetRequiredService<MatchPlayerRepository>();
+
+        var matchRepo = new MatchRepository(context, loggerMatch, _graphQLService, matchStatsRepo, matchPlayerRepo);
+
+        await matchRepo.GetOrFetchMatch(matchId);
+
+        context.ChangeTracker.Clear();
+    }
+
 
     public async Task GetOrFetchLeagueSeries(int leagueId)
     {
@@ -80,17 +134,9 @@ public class SerieRepository
         var leagueSerieResponse = await _graphQLService.SendGraphQLQueryAsync<LeagueSerieResponseType>(query, new { leagueId });
         _logger.LogInformation("Respuesta de la API: {Response}", JsonConvert.SerializeObject(leagueSerieResponse));
 
-
-        if (leagueSerieResponse == null || leagueSerieResponse.League == null)
+        if (leagueSerieResponse?.League?.Series == null || !leagueSerieResponse.League.Series.Any())
         {
-            _logger.LogError("No se obtuvo ninguna respuesta de la consulta o la estructura es incorrecta.");
-            return null;
-        }
-
-        var series = leagueSerieResponse.League.Series;
-        if (series == null || !series.Any())
-        {
-            _logger.LogWarning("No se encontraron series para la liga con ID {leagueId}.", leagueId);
+            _logger.LogWarning("No se encontraron series para la liga {leagueId}", leagueId);
             return null;
         }
 

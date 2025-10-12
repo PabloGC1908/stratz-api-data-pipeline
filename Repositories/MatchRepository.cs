@@ -1,4 +1,5 @@
-﻿using StratzAPI.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using StratzAPI.Data;
 using StratzAPI.DTOs.Match;
 using StratzAPI.Models;
 using StratzAPI.Services;
@@ -434,7 +435,9 @@ public class MatchRepository
             await _context.Match.AddAsync(match);
             await _context.SaveChangesAsync();
 
-            Match? matchDb = _context.Match.Where(m => m.Id == match.Id)
+            Match? matchDb = _context.Match
+                                    .AsNoTracking()
+                                    .Where(m => m.Id == match.Id)
                                     .FirstOrDefault() ?? throw new Exception("No se encontro la partida cargada a la BBDD");
 
             _logger.LogInformation("Partida guardada correctamente con ID real {Id}", matchDb.Id);
