@@ -23,8 +23,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options
         .UseSqlServer(builder.Configuration.GetConnectionString("SQL"))
         .LogTo(Console.WriteLine, LogLevel.Information);
-}
-);
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

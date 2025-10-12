@@ -229,7 +229,6 @@ public class MatchRepository
                         experienceEvents {
                           time
                           amount
-                          reason
                           positionX
                           positionY
                         }
@@ -416,15 +415,14 @@ public class MatchRepository
             throw new Exception("No se extrajo la data correctamente");
         }
 
-        _logger.LogInformation("Se extrajo la partida correctamente correctamente:\n{matchResponseType}",
-                                JsonSerializer.Serialize(matchResponseType, new JsonSerializerOptions { WriteIndented = true }));
+        //_logger.LogInformation("Se extrajo la partida correctamente correctamente:\n{matchResponseType}",
+        //                        JsonSerializer.Serialize(matchResponseType, new JsonSerializerOptions { WriteIndented = true }));
 
         return matchResponseType.match;
     }
 
     public async Task ProcessMatchData(MatchDto matchDto)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
         
         try
         {
@@ -432,13 +430,14 @@ public class MatchRepository
             _logger.LogInformation("Ingresando data de la partida a la base de datos");
             _logger.LogInformation("Match completo:\n{match}", 
                             JsonSerializer.Serialize(match, new JsonSerializerOptions { WriteIndented = true }));
+
             await _context.Match.AddAsync(match);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Ingreso correcto");
 
-            Match? matchDb = _context.Match
-                        .Where(mP => mP.Id == matchDto.Id)
-                        .FirstOrDefault() ?? throw new Exception("No se guardo la data de la partida del jugador");
+            Match? matchDb = _context.Match.Where(m => m.Id == match.Id)
+                                    .FirstOrDefault() ?? throw new Exception("No se encontro la partida cargada a la BBDD");
+
+            _logger.LogInformation("Partida guardada correctamente con ID real {Id}", matchDb.Id);
 
 
             _logger.LogInformation("Ingresando data de los picks y bans a la base de datos");
@@ -491,7 +490,6 @@ public class MatchRepository
             }
 
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             _logger.LogInformation("Guardado de la partida correctamente");
         }
@@ -499,7 +497,6 @@ public class MatchRepository
         {
             _logger.LogError(ex, "Error al procesar datos del match {matchId}", matchDto.Id);
             _logger.LogError("Haciendo rollback");
-            await transaction.RollbackAsync();
             throw;
         }
     }

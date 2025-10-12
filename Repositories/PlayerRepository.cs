@@ -65,6 +65,9 @@ namespace StratzAPI.Repositories
 
             Player player = Map(playerData.Player);
 
+            _logger.LogInformation("Guardando jugador {steamAccountId} en la base de datos", steamAccountId);
+            
+
             return player;
         }
 

@@ -14,6 +14,15 @@ namespace StratzAPI.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<GraphQLService> _logger;
 
+        private static readonly Queue<DateTime> _requestTimestamps = new();
+        private static readonly object _lock = new();
+        private const int MAX_REQUESTS_PER_MINUTE = 250;
+        private static readonly TimeSpan WINDOW = TimeSpan.FromMinutes(1);
+
+        private int _backoffMinutes = 2;
+        private const int MAX_BACKOFF_MINUTES = 30;
+        private readonly Random _random = new();
+
         public GraphQLService(ILogger<GraphQLService> logger)
         {
             _logger = logger;
@@ -41,67 +50,105 @@ namespace StratzAPI.Services
 
         public async Task<T?> SendGraphQLQueryAsync<T>(string query, object? variables = null)
         {
-            var payload = new
-            {
-                query,
-                variables
-            };
-
+            var payload = new { query, variables };
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            try
+            while (true)
             {
-                _logger.LogInformation("Enviando consulta GraphQL a STRATZ...");
-                var response = await _httpClient.PostAsync("", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogError("Error HTTP: {StatusCode} - {ReasonPhrase}", response.StatusCode, response.ReasonPhrase);
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("Contenido del error: {Error}", errorContent);
-                    return default;
-                }
-
-                var responseString = await response.Content.ReadAsStringAsync();
-                var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseString);
-
-                if (jsonResponse.TryGetProperty("errors", out var errors))
-                {
-                    _logger.LogError("Errores GraphQL detectados: {Errors}", errors.ToString());
-                    return default;
-                }
+                await WaitForRateLimitAsync();
 
                 try
                 {
-                    using var doc = JsonDocument.Parse(responseString);
-                    string formatted = JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
-                    _logger.LogInformation("Resultado GraphQL:\n{formatted}", formatted);
+                    _logger.LogInformation("Enviando consulta GraphQL a STRATZ...");
+                    var response = await _httpClient.PostAsync("", content);
+
+                    if ((int)response.StatusCode == 429)
+                    {
+                        await HandleBackoffAsync("STRATZ devolvió 429 (Too Many Requests)");
+                        continue;
+                    }
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        _logger.LogError("Error HTTP {StatusCode} - {ReasonPhrase}\nContenido: {Error}",
+                            response.StatusCode, response.ReasonPhrase, errorContent);
+
+                        if ((int)response.StatusCode >= 500)
+                        {
+                            await HandleBackoffAsync("Error 5xx del servidor STRATZ");
+                            continue;
+                        }
+
+                        return default;
+                    }
+
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseString);
+
+                    if (jsonResponse.TryGetProperty("errors", out var errors))
+                    {
+                        _logger.LogError("Errores GraphQL detectados: {Errors}", errors.ToString());
+                        return default;
+                    }
+
+                    _logger.LogInformation("Consulta ejecutada correctamente.");
+                    _backoffMinutes = 2;
+
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    return jsonResponse.GetProperty("data").Deserialize<T>(options);
                 }
-                catch
+                catch (HttpRequestException ex)
                 {
-                    _logger.LogWarning("No se pudo formatear la respuesta GraphQL, contenido crudo: {resultJson}", jsonResponse);
+                    await HandleBackoffAsync($"Error de red: {ex.Message}");
                 }
-
-                _logger.LogInformation("Consulta ejecutada correctamente.");
-
-                var options = new JsonSerializerOptions
+                catch (Exception ex)
                 {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var data = jsonResponse.GetProperty("data").Deserialize<T>(options);
-
-                _logger.LogInformation("Se extrajo la partida correctamente correctamente:\n{data}",
-                        JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
-
-                return data;
+                    _logger.LogError("Excepción inesperada: {Message}", ex.Message);
+                    await HandleBackoffAsync("Error general durante la petición");
+                }
             }
-            catch (Exception ex)
+        }
+
+        private static async Task WaitForRateLimitAsync()
+        {
+            while (true)
             {
-                _logger.LogError("Excepción al realizar consulta GraphQL: {Message}", ex.Message);
-                return default;
+                lock (_lock)
+                {
+                    var now = DateTime.UtcNow;
+
+                    // limpia peticiones antiguas
+                    while (_requestTimestamps.Count > 0 && now - _requestTimestamps.Peek() > WINDOW)
+                        _requestTimestamps.Dequeue();
+
+                    if (_requestTimestamps.Count < MAX_REQUESTS_PER_MINUTE)
+                    {
+                        _requestTimestamps.Enqueue(now);
+
+                        // log cada 25 peticiones (opcional)
+                        if (_requestTimestamps.Count % 25 == 0)
+                        {
+                            Console.WriteLine($"[INFO] Peticiones en el último minuto: {_requestTimestamps.Count}/{MAX_REQUESTS_PER_MINUTE}");
+                        }
+
+                        return;
+                    }
+                }
+
+                await Task.Delay(200);
             }
+        }
+
+        private async Task HandleBackoffAsync(string reason)
+        {
+            int jitter = _random.Next(0, 30);
+            _logger.LogWarning("{reason}. Esperando {minutes} minutos (+{jitter}s)...", reason, _backoffMinutes, jitter);
+
+            await Task.Delay(TimeSpan.FromMinutes(_backoffMinutes).Add(TimeSpan.FromSeconds(jitter)));
+
+            _backoffMinutes = Math.Min(_backoffMinutes * 2, MAX_BACKOFF_MINUTES);
         }
     }
 }

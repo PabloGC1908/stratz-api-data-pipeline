@@ -190,7 +190,6 @@ namespace StratzAPI.Repositories
                 MatchPlayerId = matchPlayerId,
                 Time = experienceEventDto.Time,
                 Amount = experienceEventDto.Amount,
-                Reason = experienceEventDto.Reason,
                 PositionX = experienceEventDto.PositionX,
                 PositionY = experienceEventDto.PositionY
             };

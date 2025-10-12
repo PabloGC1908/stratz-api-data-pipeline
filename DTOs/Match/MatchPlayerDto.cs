@@ -1,4 +1,6 @@
-﻿namespace StratzAPI.DTOs.Match
+﻿using System.Text.Json.Serialization;
+
+namespace StratzAPI.DTOs.Match
 {
     public class MatchPlayerDto
     {
@@ -36,6 +38,6 @@
         public short? Backpack1Id { get; set; }
         public short? Backpack2Id { get; set; }
         public short? Neutral0Id { get; set; }
-        public PlaybackDataDto PlayBackData { get; internal set; }
+        public PlaybackDataDto? PlaybackData { get; set; } 
     }
 }
