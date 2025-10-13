@@ -31,8 +31,7 @@ namespace StratzAPI.Services
                 BaseAddress = new Uri("https://api.stratz.com/graphql")
             };
 
-            var STRATZ_API_KEY = Environment.GetEnvironmentVariable("STRATZ_API_KEY")
-                ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiMDRhNjdhMDMtODNkZi00OGE3LWEzM2MtYjAzZjYxMWFhZDllIiwiU3RlYW1JZCI6IjIwNDYxNzQ2MiIsIkFQSVVzZXIiOiJ0cnVlIiwibmJmIjoxNzYwMTM1NjQxLCJleHAiOjE3OTE2NzE2NDEsImlhdCI6MTc2MDEzNTY0MSwiaXNzIjoiaHR0cHM6Ly9hcGkuc3RyYXR6LmNvbSJ9.BKM3-PVkahqDzuOnlzpccv_O1IozBkQ-MJWMQJNJjj8";
+            var STRATZ_API_KEY = Environment.GetEnvironmentVariable("STRATZ_API_KEY");
 
             _logger.LogInformation("STRATZ_API_KEY detectada: {key}", string.IsNullOrEmpty(STRATZ_API_KEY) ? "NO DETECTADA" : "[OK]");
 

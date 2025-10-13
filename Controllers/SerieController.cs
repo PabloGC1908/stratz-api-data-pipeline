@@ -20,7 +20,7 @@ namespace StratzAPI.Controllers
         public async Task<IActionResult> PostLeagueSeries(int leagueId)
         {
             _logger.LogInformation("Ingresando series de la liga: {leagueId}", leagueId);
-            await _serieRepository.GetOrFetchLeagueSeriesParallel(leagueId);
+            await _serieRepository.GetOrFetchLeagueSeries(leagueId);
 
             try
             {
