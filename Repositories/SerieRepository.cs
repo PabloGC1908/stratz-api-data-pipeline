@@ -43,7 +43,7 @@ public class SerieRepository
         }
 
         var matches = leagueSeriesDto.Series.SelectMany(s => s.Matches).ToList();
-        var semaphore = new SemaphoreSlim(20); // Numero de tareas concurrentes
+        var semaphore = new SemaphoreSlim(10); // Numero de tareas concurrentes
 
         var tasks = matches.Select(async match =>
         {

@@ -45,5 +45,22 @@ namespace StratzAPI.Controllers
             var result = await _graphQLService.SendGraphQLQueryAsync<dynamic>(query);
             return Ok(result);
         }
+
+        [HttpPost("actualizar")]
+        public async Task<IActionResult> PostUpdateMatch(long matchId)
+        {
+            _logger.LogInformation("Actualizando partida con id: {matchId}", matchId);
+
+            await _matchRepository.GetOrFetchMatch(matchId);
+
+            try
+            {
+                return Ok("Datos guardados correctamente");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace StratzAPI.DTOs.Match
 {
-    public class PlaybackDataDto
+    public class MatchPlayerPlaybackDataDto
     {
         public List<AbilityLearnEventDto>? AbilityLearnEvents { get; set; }
         public List<AbilityUsedEventDto>? AbilityUsedEvents { get; set; }

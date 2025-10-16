@@ -23,7 +23,7 @@ namespace StratzAPI.Repositories
             _graphQLService = graphQLService;
         }
 
-        public async Task ProcessPlaybackMatchPlayerData(PlaybackDataDto playbackData, long matchPlayerId)
+        public async Task ProcessPlaybackMatchPlayerData(MatchPlayerPlaybackDataDto playbackData, long matchPlayerId)
         {
             if (playbackData == null)
             {

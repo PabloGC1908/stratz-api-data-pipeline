@@ -38,6 +38,6 @@ namespace StratzAPI.DTOs.Match
         public short? Backpack1Id { get; set; }
         public short? Backpack2Id { get; set; }
         public short? Neutral0Id { get; set; }
-        public PlaybackDataDto? PlaybackData { get; set; } 
+        public MatchPlayerPlaybackDataDto? PlaybackData { get; set; } 
     }
 }

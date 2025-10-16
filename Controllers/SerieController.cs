@@ -16,6 +16,22 @@ namespace StratzAPI.Controllers
             _serieRepository = serieRepository;
         }
 
+        [HttpPost("parallel")]
+        public async Task<IActionResult> PostLeagueSeriesParallel(int leagueId)
+        {
+            _logger.LogInformation("Ingresando series de la liga: {leagueId}", leagueId);
+            await _serieRepository.GetOrFetchLeagueSeriesParallel(leagueId);
+
+            try
+            {
+                return Ok("Datos guardados correctamente");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> PostLeagueSeries(int leagueId)
         {
