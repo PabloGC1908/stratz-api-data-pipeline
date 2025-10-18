@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Internal;
 using StratzAPI.Models;
 using StratzAPI.Models.Events;
+using StratzAPI.Models.MatchEvents;
 
 namespace StratzAPI.Data
 {
@@ -40,6 +41,12 @@ namespace StratzAPI.Data
         public DbSet<SpiritBearInventoryEvent> SpiritBearInventoryEvent { get; set; }
         public DbSet<StreakEvent> StreakEvent { get; set; }
         public DbSet<TowerDamageEvent> TowerDamageEvent { get; set; }
+        public DbSet<BuildingEvent> BuildingEvent { get; set; }
+        public DbSet<MatchRuneEvent> MatchRuneEvent { get; set; }
+        public DbSet<RoshanEvent> RoshanEvent { get; set; }
+        public DbSet<TowerDeathEvent> TowerDeathEvent { get; set; }
+        public DbSet<WardEvent> WardEvent { get; set; }
+        public DbSet<CourierEvent> CourierEvent { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) 
         {

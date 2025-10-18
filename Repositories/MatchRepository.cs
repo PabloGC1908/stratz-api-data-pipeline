@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StratzAPI.Data;
 using StratzAPI.DTOs.Match;
+using StratzAPI.DTOs.Match.MatchEvents;
 using StratzAPI.Models;
+using StratzAPI.Models.MatchEvents;
 using StratzAPI.Services;
 using System.Text.Json;
 
@@ -42,6 +44,127 @@ public class MatchRepository
         }
     }
 
+    public async Task GetOrUpdateMatch(long matchId)
+    {
+        _logger.LogInformation("Actualizando partida con id: {matchId}", matchId);
+        Match? match = await _context.Match.FindAsync(matchId);
+
+        if (match == null)
+        {
+            _logger.LogInformation("No se encuentra el id de la partida, registrando partida");
+            MatchDto matchDto = await GetMatch(matchId);
+            await ProcessMatchData(matchDto);
+        }
+        else
+        {
+            _logger.LogInformation("Se encontro la partida, actualizando partida");
+            MatchUpdateDto matchUpdateDto = await UpdateMatch(matchId);
+
+            await ProcessUpdateMatchData(matchUpdateDto);
+        }
+    }
+
+    public async Task<MatchUpdateDto> UpdateMatch(long matchId)
+    {
+        const string query = @"
+        query($matchId: Long!) {
+            match(id: $matchId) {
+                id
+                playbackData {
+                  courierEvents {
+                    id
+                    ownerHero
+                    isRadiant
+                    events {
+                      time
+                      positionX
+                      positionY
+                      hp
+                      isFlying
+                      respawnTime
+                      didCastBoost
+                      item0Id
+                      item1Id
+                      item2Id
+                      item3Id
+                      item4Id
+                      item5Id
+                    }
+                  }
+                  runeEvents {
+                    indexId
+                    time
+                    positionX
+                    positionY
+                    location
+                    rune
+                    action
+                  }
+      
+                  wardEvents {
+                    indexId
+                    time
+                    positionX
+                    positionY
+                    fromPlayer
+                    wardType
+                    action
+                    playerDestroyed
+                  }
+      
+                  buildingEvents {
+                    time
+                    indexId
+                    type
+                    hp
+                    maxHp
+                    positionX
+                    positionY
+                    isRadiant
+                    npcId
+                    didShrineActivate
+                  }
+      
+                  towerDeathEvents {
+                    time
+                    radiant
+                    dire
+                  }
+      
+                  roshanEvents {
+                    time
+                    hp
+                    maxHp
+                    createTime
+                    x
+                    y
+                    totalDamageTaken
+                    item0
+                    item1
+                    item2
+                    item3
+                    item4
+                    item5
+                  }
+                }
+            }
+        }";
+
+        _logger.LogInformation("Extrayendo partida con id: {matchId}", matchId);
+
+        var matchResponseType = await _graphQLService.SendGraphQLQueryAsync<MatchUpdateResponseType>(query, new { matchId });
+
+        if (matchResponseType == null)
+        {
+            throw new Exception("No se extrajo la data correctamente");
+        }
+
+        //_logger.LogInformation("Se extrajo la partida correctamente correctamente:\n{matchResponseType}",
+        //                        JsonSerializer.Serialize(matchResponseType, new JsonSerializerOptions { WriteIndented = true }));
+
+        return matchResponseType.match;
+    }
+
     public async Task<MatchDto> GetMatch(long matchId)
     {
         const string query = @"
@@ -71,6 +194,85 @@ public class MatchRepository
                     isCaptain
                     playerIndex
                 }
+
+                playbackData {
+                  courierEvents {
+                    id
+                    ownerHero
+                    isRadiant
+                    events {
+                      time
+                      positionX
+                      positionY
+                      hp
+                      isFlying
+                      respawnTime
+                      didCastBoost
+                      item0Id
+                      item1Id
+                      item2Id
+                      item3Id
+                      item4Id
+                      item5Id
+                    }
+                  }
+                  runeEvents {
+                    indexId
+                    time
+                    positionX
+                    positionY
+                    location
+                    rune
+                    action
+                  }
+      
+                  wardEvents {
+                    indexId
+                    time
+                    positionX
+                    positionY
+                    fromPlayer
+                    wardType
+                    action
+                    playerDestroyed
+                  }
+      
+                  buildingEvents {
+                    time
+                    indexId
+                    type
+                    hp
+                    maxHp
+                    positionX
+                    positionY
+                    isRadiant
+                    npcId
+                    didShrineActivate
+                  }
+      
+                  towerDeathEvents {
+                    time
+                    radiant
+                    dire
+                  }
+      
+                  roshanEvents {
+                    time
+                    hp
+                    maxHp
+                    createTime
+                    x
+                    y
+                    totalDamageTaken
+                    item0
+                    item1
+                    item2
+                    item3
+                    item4
+                    item5
+                  }
+                }
+
                 players {
                     steamAccountId
                     isRadiant
@@ -422,6 +624,74 @@ public class MatchRepository
         return matchResponseType.match;
     }
 
+    public async Task ProcessUpdateMatchData(MatchUpdateDto matchDto)
+    {
+        if (matchDto == null)
+        {
+            _logger.LogError("MatchUpdateDto es nulo, omitiendo");
+            return;
+        }
+
+
+        try
+        {
+            if (matchDto.PlaybackData == null)
+            {
+                _logger.LogError("Match Playback Data es nulo, omitiendo");
+                return;
+            }
+
+            _logger.LogInformation("Actualizando data de la partida a la base de datos");
+            _logger.LogInformation("Match completo:\n{match}",
+                            JsonSerializer.Serialize(matchDto, new JsonSerializerOptions { WriteIndented = true }));
+
+            await AddEvents(matchDto.PlaybackData.BuildingEvents, mapBuildingEvent, _context.BuildingEvent, matchDto.Id);
+            await AddEvents(matchDto.PlaybackData.RoshanEvents, mapRoshanEvent, _context.RoshanEvent, matchDto.Id);
+            await AddEvents(matchDto.PlaybackData.TowerDeathEvents, mapTowerDeathEvent, _context.TowerDeathEvent, matchDto.Id);
+            await AddEvents(matchDto.PlaybackData.RuneEvents, mapMatchRuneEvent, _context.MatchRuneEvent, matchDto.Id);
+            await AddEvents(matchDto.PlaybackData.WardEvents, mapWardEvent, _context.WardEvent, matchDto.Id);
+
+            foreach (var courierEvent in matchDto.PlaybackData.CourierEvents)
+            {
+
+                foreach (var cEvent in courierEvent.Events)
+                {
+                    CourierEvent courierEventDb = new CourierEvent
+                    {
+                        MatchId = matchDto.Id,
+                        OwnerHero = courierEvent.OwnerHero,
+                        IsRadiant = courierEvent.IsRadiant,
+                        Time = cEvent.Time,
+                        PositionX = cEvent.PositionX,
+                        PositionY = cEvent.PositionY,
+                        Hp = cEvent.Hp,
+                        IsFlying = cEvent.IsFlying,
+                        RespawnTime = cEvent.RespawnTime,
+                        DidCastBoost = cEvent.DidCastBoost,
+                        Item0Id = cEvent.Item0Id,
+                        Item1Id = cEvent.Item1Id,
+                        Item2Id = cEvent.Item2Id,
+                        Item3Id = cEvent.Item3Id,
+                        Item4Id = cEvent.Item4Id,
+                        Item5Id = cEvent.Item5Id
+                    };
+
+                    await _context.AddAsync(courierEventDb);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Guardado de la partida correctamente");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al procesar datos del match {matchId}", matchDto.Id);
+            _logger.LogError("Haciendo rollback");
+            throw;
+        }
+    }
+
     public async Task ProcessMatchData(MatchDto matchDto)
     {
         
@@ -503,6 +773,21 @@ public class MatchRepository
             throw;
         }
     }
+    private async Task AddEvents<TDto, TEntity>(IEnumerable<TDto>? dtos, Func<TDto, long, TEntity> mapFunc,
+                                     DbSet<TEntity> dbSet, long matchPlayerId)
+    where TDto : class
+    where TEntity : class
+    {
+        if (dtos == null || !dtos.Any())
+            return;
+
+        foreach (var dto in dtos)
+        {
+            if (dto == null) continue;
+            var entity = mapFunc(dto, matchPlayerId);
+            await dbSet.AddAsync(entity);
+        }
+    }
 
     public Match Map(MatchDto matchDto)
     {
@@ -533,6 +818,87 @@ public class MatchRepository
             DireKills = direKills,
             RadiantNetworthLead = radiantNetworthLead,
             RadiantExperienceLead = radiantExperienceLead
+        };
+    }
+
+    public BuildingEvent mapBuildingEvent(BuildingEventDto buildingEventDto, long matchId)
+    {
+        return new BuildingEvent
+        {
+            MatchId = matchId,
+            Time = buildingEventDto.Time,
+            IndexId = buildingEventDto.IndexId,
+            Type = buildingEventDto.Type,
+            Hp = buildingEventDto.Hp,
+            MaxHp = buildingEventDto.MaxHp,
+            PositionX = buildingEventDto.PositionX,
+            PositionY = buildingEventDto.PositionY,
+            IsRadiant = buildingEventDto.IsRadiant,
+            NpcId = buildingEventDto.NpcId,
+            DidShrineActivate = buildingEventDto.DidShrineActivate
+        };
+    }
+
+    public MatchRuneEvent mapMatchRuneEvent(MatchRuneEventDto matchRuneEventDto, long matchId)
+    {
+        return new MatchRuneEvent
+        {
+            MatchId = matchId,
+            IndexId = matchRuneEventDto.IndexId,
+            Time = matchRuneEventDto.Time,
+            PositionX = matchRuneEventDto.PositionX,
+            PositionY = matchRuneEventDto.PositionY,
+            Location = matchRuneEventDto.Location,
+            Rune = matchRuneEventDto.Rune,
+            Action = matchRuneEventDto.Action
+        };
+    }
+
+    public RoshanEvent mapRoshanEvent(RoshanEventDto roshanEventDto, long matchId)
+    {
+        return new RoshanEvent
+        {
+            MatchId = matchId,
+            Time = roshanEventDto.Time,
+            Hp = roshanEventDto.Hp,
+            MaxHp = roshanEventDto.MaxHp,
+            CreateTime = roshanEventDto.CreateTime,
+            X = roshanEventDto.X,
+            Y = roshanEventDto.Y,
+            TotalDamageTaken = roshanEventDto.TotalDamageTaken,
+            Item0 = roshanEventDto.Item0,
+            Item1 = roshanEventDto.Item1,
+            Item2 = roshanEventDto.Item2,
+            Item3 = roshanEventDto.Item3,
+            Item4 = roshanEventDto.Item4,
+            Item5 = roshanEventDto.Item5
+        };
+    }
+
+    public TowerDeathEvent mapTowerDeathEvent(TowerDeathEventDto towerDeathEventDto, long matchId)
+    {
+        return new TowerDeathEvent
+        {
+            MatchId = matchId,
+            Time = towerDeathEventDto.Time,
+            Radiant = towerDeathEventDto.Radiant,
+            Dire = towerDeathEventDto.Dire,
+        };
+    }
+
+    public WardEvent mapWardEvent(WardEventDto wardEventDto, long matchId)
+    {
+        return new WardEvent
+        {
+            MatchId = matchId,
+            Time = wardEventDto.Time,
+            IndexId = wardEventDto.IndexId,
+            PositionX = wardEventDto.PositionX,
+            PositionY = wardEventDto.PositionY,
+            FromPlayer = wardEventDto.FromPlayer,
+            WardType = wardEventDto.WardType,
+            Action = wardEventDto.Action,
+            PlayerDestroyed = wardEventDto.PlayerDestroyed
         };
     }
 }

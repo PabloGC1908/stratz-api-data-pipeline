@@ -51,7 +51,7 @@ namespace StratzAPI.Controllers
         {
             _logger.LogInformation("Actualizando partida con id: {matchId}", matchId);
 
-            await _matchRepository.GetOrFetchMatch(matchId);
+            await _matchRepository.GetOrUpdateMatch(matchId);
 
             try
             {
