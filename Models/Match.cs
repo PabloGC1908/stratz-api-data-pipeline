@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using StratzAPI.Models.MatchEvents;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StratzAPI.Models
@@ -20,5 +21,11 @@ namespace StratzAPI.Models
         public ICollection<MatchStats>? MatchStats { get; set; }
         public ICollection<MatchPickBans>? MatchPickBans { get; set; }
         public ICollection<MatchPlayer>? MatchPlayers { get; set; }
+        public ICollection<BuildingEvent>? BuildingEvent { get; set; }
+        public ICollection<CourierEvent>? CourierEvent { get; set; }
+        public ICollection<MatchRuneEvent>? MatchRuneEvent { get; set; }
+        public ICollection<RoshanEvent>? RoshanEvent { get; set; }
+        public ICollection<TowerDeathEvent>? TowerDeathEvent { get; set; }
+        public ICollection<WardEvent>? WardEvent { get; set; }
     }
 }

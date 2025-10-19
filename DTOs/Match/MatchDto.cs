@@ -20,7 +20,6 @@
         public ICollection<int?>? RadiantExperienceLeads { get; set; }
         public ICollection<MatchPickBansDto>? PickBans { get; set; }
         public ICollection<MatchPlayerDto>? Players { get; set; }
-
-        public MatchPlaybackDataDto? Playback {  get; set; }
+        public MatchPlaybackDataDto? PlaybackData {  get; set; }
     }
 }

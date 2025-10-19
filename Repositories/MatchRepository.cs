@@ -58,9 +58,9 @@ public class MatchRepository
         else
         {
             _logger.LogInformation("Se encontro la partida, actualizando partida");
-            MatchUpdateDto matchUpdateDto = await UpdateMatch(matchId);
+            MatchDto matchUpdateDto = await GetMatch(matchId);
 
-            await ProcessUpdateMatchData(matchUpdateDto);
+            await ProcessMatchData(matchUpdateDto);
         }
     }
 
@@ -697,32 +697,43 @@ public class MatchRepository
         
         try
         {
+            _logger.LogInformation("Procesando partida {matchId}", matchDto.Id);
+
             Match match = Map(matchDto);
-            _logger.LogInformation("Ingresando data de la partida a la base de datos");
+
             _logger.LogInformation("Match completo:\n{match}", 
                             JsonSerializer.Serialize(match, new JsonSerializerOptions { WriteIndented = true }));
 
-            await _context.Match.AddAsync(match);
+            Match? existingMatch = await _context.Match
+                                    .Where(m => m.Id == match.Id)
+                                    .FirstOrDefaultAsync() ?? throw new Exception("No se encontro la partida cargada a la BBDD");
+
+
+            if (existingMatch == null)
+            {
+                _logger.LogInformation("La partida no existe, se creará una nueva.");
+                await _context.Match.AddAsync(match);
+            } 
+            else
+            {
+                _logger.LogInformation("La partida ya existe, se actualizarán los datos.");
+
+                _context.Entry(existingMatch).CurrentValues.SetValues(match);
+            }
+
             await _context.SaveChangesAsync();
 
-            Match? matchDb = _context.Match
-                                    .AsNoTracking()
-                                    .Where(m => m.Id == match.Id)
-                                    .FirstOrDefault() ?? throw new Exception("No se encontro la partida cargada a la BBDD");
+            var matchDb = await _context.Match.FirstOrDefaultAsync(m => m.Id == match.Id);
+            if (matchDb == null)
+                throw new Exception("No se encontró la partida guardada en la base de datos.");
 
-            _logger.LogInformation("Partida guardada correctamente con ID real {Id}", matchDb.Id);
+            _logger.LogInformation("Partida guardada/actualizada correctamente con ID {Id}", matchDb.Id);
 
-
-            _logger.LogInformation("Ingresando data de los picks y bans a la base de datos");
             await _matchStatsPickBansRepository.ProcessMatchPickBan(matchDto.PickBans, matchDb.Id);
-            _logger.LogInformation("Ingreso Correcto");
-            
-            
-            _logger.LogInformation("Ingresando data de los jugadores a la base de datos");
-            await _matchPlayerRepository.ProcessMatchPlayerData(matchDto.Players, matchDb.Id);
-            _logger.LogInformation("Ingreso correcto");
 
-            
+            await _matchPlayerRepository.ProcessMatchPlayerData(matchDto.Players, matchDb.Id);
+
+
             _logger.LogInformation("WinRates Count: {count}", matchDto.WinRates.Count);
             _logger.LogInformation("PredictedWinRates Count: {count}", matchDto.PredictedWinRates.Count);
             _logger.LogInformation("RadiantKills Count: {count}", matchDto.RadiantKills.Count);
@@ -748,7 +759,7 @@ public class MatchRepository
             for (int i = 0; i < maxCount; i++)
             {
                 MatchStats matchStats = MapMatchStats(
-                    matchId: matchDb.Id,
+                    matchId: existingMatch.Id,
                     min: i,
                     winRate: i < matchDto.WinRates.Count ? matchDto.WinRates.ElementAt(i) : (decimal?)null,
                     predictedWinRate: i < matchDto.PredictedWinRates.Count ? matchDto.PredictedWinRates.ElementAt(i) : (decimal?)null,
@@ -759,17 +770,58 @@ public class MatchRepository
                 );
 
                 await _context.MatchStats.AddAsync(matchStats);
-                _logger.LogInformation("Guardado matchStats con ID {matchId} y minuto {min}", matchDb.Id, i);
+                _logger.LogInformation("Guardado matchStats con ID {matchId} y minuto {min}", existingMatch.Id, i);
+            }
+
+            if (matchDto.PlaybackData == null)
+            {
+                _logger.LogWarning("Match PlaybackData es nulo,omitiendo");
+            }
+            else
+            {
+                await AddEvents(matchDto.PlaybackData.BuildingEvents, mapBuildingEvent, _context.BuildingEvent, matchDto.Id);
+                await AddEvents(matchDto.PlaybackData.RoshanEvents, mapRoshanEvent, _context.RoshanEvent, matchDto.Id);
+                await AddEvents(matchDto.PlaybackData.TowerDeathEvents, mapTowerDeathEvent, _context.TowerDeathEvent, matchDto.Id);
+                await AddEvents(matchDto.PlaybackData.RuneEvents, mapMatchRuneEvent, _context.MatchRuneEvent, matchDto.Id);
+                await AddEvents(matchDto.PlaybackData.WardEvents, mapWardEvent, _context.WardEvent, matchDto.Id);
+
+                foreach (var courierEvent in matchDto.PlaybackData.CourierEvents)
+                {
+
+                    foreach (var cEvent in courierEvent.Events)
+                    {
+                        CourierEvent courierEventDb = new CourierEvent
+                        {
+                            MatchId = matchDto.Id,
+                            OwnerHero = courierEvent.OwnerHero,
+                            IsRadiant = courierEvent.IsRadiant,
+                            Time = cEvent.Time,
+                            PositionX = cEvent.PositionX,
+                            PositionY = cEvent.PositionY,
+                            Hp = cEvent.Hp,
+                            IsFlying = cEvent.IsFlying,
+                            RespawnTime = cEvent.RespawnTime,
+                            DidCastBoost = cEvent.DidCastBoost,
+                            Item0Id = cEvent.Item0Id,
+                            Item1Id = cEvent.Item1Id,
+                            Item2Id = cEvent.Item2Id,
+                            Item3Id = cEvent.Item3Id,
+                            Item4Id = cEvent.Item4Id,
+                            Item5Id = cEvent.Item5Id
+                        };
+
+                        await _context.AddAsync(courierEventDb);
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Guardado de la partida correctamente");
+            _logger.LogInformation("Procesamiento de la partida {matchId} completado correctamente", matchDto.Id);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al procesar datos del match {matchId}", matchDto.Id);
-            _logger.LogError("Haciendo rollback");
             throw;
         }
     }

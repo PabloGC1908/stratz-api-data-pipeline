@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using StratzAPI.DTOs;
 using StratzAPI.Repositories;
 using StratzAPI.Services;
 using System.Text;
@@ -46,7 +47,7 @@ namespace StratzAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost("actualizar")]
+        [HttpPost("update")]
         public async Task<IActionResult> PostUpdateMatch(long matchId)
         {
             _logger.LogInformation("Actualizando partida con id: {matchId}", matchId);
@@ -61,6 +62,20 @@ namespace StratzAPI.Controllers
             {
                 return StatusCode(500, $"Error: {ex.Message}");
             }
+        }
+
+        [HttpPost("update-list")]
+        public async Task<IActionResult> SaveMatches([FromBody] MatchListRequest request)
+        {
+            if (request.MatchIds == null || !request.MatchIds.Any())
+                return BadRequest("La lista de matches esta vacía");
+
+            foreach (var matchId in request.MatchIds)
+            {
+                await _matchRepository.GetOrUpdateMatch(matchId);
+            }
+
+            return Ok("Partidas procesados correctamente");
         }
     }
 }
