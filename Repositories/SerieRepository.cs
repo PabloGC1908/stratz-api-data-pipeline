@@ -36,7 +36,7 @@ public class SerieRepository
         }
 
         var leagueSeriesDto = await GetLeagueSeries(leagueId);
-        if (leagueSeriesDto?.Series == null || !leagueSeriesDto.Series.Any())
+        if (leagueSeriesDto?.Series == null || leagueSeriesDto.Series.Count == 0)
         {
             _logger.LogWarning("No se encontraron series para la liga {leagueId}.", leagueId);
             return;
